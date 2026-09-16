@@ -14,6 +14,6 @@ public interface NotificationRepository {
     int markAllReadByRecipientId(String recipientId, Instant readAt);
     int deleteByIdAndRecipientIdAndStatus(Long id, String recipientId, NotificationStatus status);
     int deleteByStatusAndCreatedAtBefore(NotificationStatus status, Instant before);
-    /** 删除某收件人的全部通知，供删除用户流程使用。 */
-    long deleteByRecipientId(String recipientId);
+    /** 删除某收件人的全部通知，供删除用户流程使用。@Modifying 查询仅允许 int 返回。 */
+    int deleteByRecipientId(String recipientId);
 }

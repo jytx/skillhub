@@ -46,5 +46,5 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
     @Modifying
     @Transactional
     @Query("DELETE FROM Notification n WHERE n.recipientId = :recipientId")
-    long deleteByRecipientId(String recipientId);
+    int deleteByRecipientId(String recipientId);
 }
