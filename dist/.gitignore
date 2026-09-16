@@ -1,0 +1,4 @@
+# 构建产物标记：构建脚本写入 latest-tag，部署脚本读取它自动跟随最新版本。
+# 不进 git，但 dist 目录本身需要存在（部署脚本依赖 dist/latest-tag 路径）。
+*
+!/.gitignore

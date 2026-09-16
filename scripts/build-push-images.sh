@@ -95,3 +95,13 @@ fi
 if [[ "$TARGET" == "all" || "$TARGET" == "scanner" ]]; then
   sync_scanner
 fi
+# --- 记录本次构建产物 ---------------------------------------------------------
+# 把最终 tag 写入仓库根的 dist/latest-tag：
+#   - 本地：/opt/skillhub-build/dist/latest-tag（供下一条命令如 release-upgrade 读取）
+#   - 部署：/app/skillhub/dist/latest-tag（与 release 部署脚本共用同一文件）
+# 这样打 tag 后任何升级命令都自动跟上最新版本，不必再手动改 .env-release。
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+mkdir -p "$PROJECT_ROOT/dist" "/app/skillhub/dist"
+printf "%s\n" "$TAG" > "$PROJECT_ROOT/dist/latest-tag"
+cp "$PROJECT_ROOT/dist/latest-tag" "/app/skillhub/dist/latest-tag"
+echo ">>> 写入最新 tag: $TAG (dist/latest-tag)"
