@@ -8,16 +8,38 @@
 # 保证三个镜像版本号始终一致（compose 的 SKILLHUB_VERSION 同时作用于三者）。
 #
 # 用法:
-#   ./scripts/build-push-images.sh <镜像tag> [all|server|web|scanner]
+#   ./scripts/build-push-images.sh [镜像tag] [all|server|web|scanner]
+#   tag 传 auto 或省略时按「日期-当天序号」规则自动生成（查私库当天已有序号递增）
 # 环境变量:
 #   REGISTRY_PREFIX  私库前缀，默认 dockerhub.nobiliachina.com/common
 #
 set -euo pipefail
 
-TAG="${1:?用法: $0 <镜像tag> [all|server|web|scanner]}"
+TAG="${1:-auto}"
 TARGET="${2:-all}"
 REGISTRY_PREFIX="${REGISTRY_PREFIX:-dockerhub.nobiliachina.com/common}"
 SCANNER_UPSTREAM="ghcr.io/iflytek/skillhub-scanner:latest"
+
+# 按「YYYY.MM.DD-序号」规则自动生成 tag：
+# 以私库 server 镜像当天已推送的序号为基准递增，取第一个未占用的序号
+generate_tag() {
+  local today seq candidate
+  today="$(date +%Y.%m.%d)"
+  for seq in $(seq 1 99); do
+    candidate="$today-$seq"
+    if ! docker manifest inspect "$REGISTRY_PREFIX/skillhub-server:$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return
+    fi
+  done
+  echo "!!! 当天构建序号已到 99，请显式指定 tag" >&2
+  exit 1
+}
+
+if [[ "$TAG" == "auto" ]]; then
+  TAG="$(generate_tag)"
+  echo ">>> 自动生成 tag: $TAG"
+fi
 
 # RUN --mount 语法依赖 BuildKit；老版本 Docker 需显式开启
 export DOCKER_BUILDKIT=1

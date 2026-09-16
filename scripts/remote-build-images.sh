@@ -4,7 +4,8 @@
 # 在本地 Mac 上运行（不在服务器上跑），Mac 上无需 Java/Node/Docker 构建环境。
 #
 # 用法:
-#   ./scripts/remote-build-images.sh <镜像tag> [all|server|web]
+#   ./scripts/remote-build-images.sh [镜像tag] [all|server|web|scanner]
+#   tag 省略时由服务器端按「日期-当天序号」规则自动生成
 # 环境变量:
 #   REMOTE_HOST  构建服务器，默认 root@47.102.42.81
 #   REMOTE_DIR   服务器构建目录，默认 /opt/skillhub-build
@@ -12,7 +13,7 @@
 #
 set -euo pipefail
 
-TAG="${1:?用法: $0 <镜像tag> [all|server|web]}"
+TAG="${1:-auto}"
 TARGET="${2:-all}"
 REMOTE_HOST="${REMOTE_HOST:-root@47.102.42.81}"
 REMOTE_DIR="${REMOTE_DIR:-/opt/skillhub-build}"
@@ -29,5 +30,5 @@ rsync -az --delete -e "${SSH_CMD[*]}" \
   --exclude='.codegraph' --exclude='logs' --exclude='.venv' \
   "$PROJECT_ROOT/" "$REMOTE_HOST:$REMOTE_DIR/"
 
-echo ">>> [2/2] 远程构建并推送 (tag=$TAG target=$TARGET) ..."
+echo ">>> [2/2] 远程构建并推送 (tag=${TAG} target=$TARGET) ..."
 "${SSH_CMD[@]}" "$REMOTE_HOST" "cd $REMOTE_DIR && ./scripts/build-push-images.sh '$TAG' '$TARGET'"
