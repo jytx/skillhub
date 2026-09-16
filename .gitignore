@@ -93,3 +93,6 @@ charts/skillhub/charts/*.tgz
 
 # Local config file
 .mcp.json
+
+# CodeGraph index (local tooling artifact)
+.codegraph/

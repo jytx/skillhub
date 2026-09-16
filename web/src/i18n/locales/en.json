@@ -817,7 +817,30 @@
     "confirmAction": "Confirm Action",
     "confirmDisable": "Are you sure you want to disable user {{username}}?",
     "confirmEnable": "Are you sure you want to enable user {{username}}?",
-    "confirmResetPassword": "Send password reset verification code to user {{username}}?"
+    "confirmResetPassword": "Send password reset verification code to user {{username}}?",
+    "createUser": {
+      "action": "Add User",
+      "title": "Add User",
+      "description": "Create a new local account with the default USER role. Roles can be changed afterwards via Change Role.",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "3-64 letters, digits, or underscores",
+      "usernameRequired": "Username is required",
+      "usernameInvalid": "Username must be 3-64 characters: letters, digits, or underscores",
+      "usernameExists": "Username already exists",
+      "emailLabel": "Email",
+      "emailPlaceholder": "user@example.com",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email address",
+      "emailExists": "Email is already in use",
+      "passwordLabel": "Initial Password",
+      "passwordPlaceholder": "At least 8 chars with 3 of: upper, lower, digits, symbols",
+      "passwordRequired": "Initial password is required",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordTooWeak": "Password must include at least 3 character types",
+      "passwordHint": "Share the initial password with the user and advise changing it after first login.",
+      "submit": "Create",
+      "submitting": "Creating..."
+    }
   },
   "adminLabels": {
     "title": "Label Management",

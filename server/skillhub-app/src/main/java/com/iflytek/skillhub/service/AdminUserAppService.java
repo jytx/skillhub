@@ -2,6 +2,8 @@ package com.iflytek.skillhub.service;
 
 import com.iflytek.skillhub.auth.entity.Role;
 import com.iflytek.skillhub.auth.entity.UserRoleBinding;
+import com.iflytek.skillhub.auth.local.LocalAuthService;
+import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
 import com.iflytek.skillhub.domain.event.UserActivatedEvent;
@@ -47,18 +49,40 @@ public class AdminUserAppService {
     private final UserRoleBindingRepository userRoleBindingRepository;
     private final RoleRepository roleRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final LocalAuthService localAuthService;
 
     public AdminUserAppService(
             AdminUserSearchRepository adminUserSearchRepository,
             UserAccountRepository userAccountRepository,
             UserRoleBindingRepository userRoleBindingRepository,
             RoleRepository roleRepository,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            LocalAuthService localAuthService) {
         this.adminUserSearchRepository = adminUserSearchRepository;
         this.userAccountRepository = userAccountRepository;
         this.userRoleBindingRepository = userRoleBindingRepository;
         this.roleRepository = roleRepository;
         this.eventPublisher = eventPublisher;
+        this.localAuthService = localAuthService;
+    }
+
+    /**
+     * 管理员创建本地账号。复用注册逻辑以保证账号、凭据、全局命名空间成员、
+     * 个人命名空间等副作用与自助注册完全一致；新账号默认 USER 角色，
+     * 如需更高权限由管理员在创建后通过角色变更授予。
+     */
+    @Transactional
+    public AdminUserSummaryResponse createUser(String username, String password, String email) {
+        PlatformPrincipal principal = localAuthService.register(username, password, email);
+        UserAccount user = loadUser(principal.userId());
+        List<String> roles = loadRolesByUserId(List.of(user.getId())).getOrDefault(user.getId(), List.of());
+        return new AdminUserSummaryResponse(
+                user.getId(),
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getStatus().name(),
+                roles,
+                user.getCreatedAt());
     }
 
     @Transactional(readOnly = true)

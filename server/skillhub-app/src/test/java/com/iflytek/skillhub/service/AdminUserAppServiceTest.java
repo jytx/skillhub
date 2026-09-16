@@ -2,6 +2,9 @@ package com.iflytek.skillhub.service;
 
 import com.iflytek.skillhub.auth.entity.Role;
 import com.iflytek.skillhub.auth.entity.UserRoleBinding;
+import com.iflytek.skillhub.auth.exception.AuthFlowException;
+import com.iflytek.skillhub.auth.local.LocalAuthService;
+import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
@@ -17,6 +20,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -37,13 +41,42 @@ class AdminUserAppServiceTest {
     private final RoleRepository roleRepository = mock(RoleRepository.class);
     private final UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+    private final LocalAuthService localAuthService = mock(LocalAuthService.class);
     private final AdminUserAppService service = new AdminUserAppService(
             adminUserSearchRepository,
             userAccountRepository,
             userRoleBindingRepository,
             roleRepository,
-            eventPublisher
+            eventPublisher,
+            localAuthService
     );
+
+    @Test
+    void createUser_reusesRegistrationAndReturnsSummary() {
+        PlatformPrincipal principal = new PlatformPrincipal(
+                "user-9", "dave", "dave@example.com", null, "local", Set.of());
+        when(localAuthService.register("dave", "Abcd123!", "dave@example.com")).thenReturn(principal);
+        when(userAccountRepository.findById("user-9"))
+                .thenReturn(Optional.of(user("user-9", "dave", "dave@example.com", UserStatus.ACTIVE)));
+        when(userRoleBindingRepository.findByUserIdIn(List.of("user-9"))).thenReturn(List.of());
+
+        var response = service.createUser("dave", "Abcd123!", "dave@example.com");
+
+        assertThat(response.id()).isEqualTo("user-9");
+        assertThat(response.username()).isEqualTo("dave");
+        assertThat(response.status()).isEqualTo("ACTIVE");
+        // 无显式角色绑定时回落到默认 USER 角色，与自助注册行为一致
+        assertThat(response.platformRoles()).isEqualTo(List.of("USER"));
+    }
+
+    @Test
+    void createUser_propagatesRegistrationConflicts() {
+        when(localAuthService.register("alice", "Abcd123!", "alice@example.com"))
+                .thenThrow(new AuthFlowException(HttpStatus.CONFLICT, "error.auth.local.username.exists"));
+
+        assertThrows(AuthFlowException.class,
+                () -> service.createUser("alice", "Abcd123!", "alice@example.com"));
+    }
 
     @Test
     void listUsers_returnsPagedUsersFromRepository() {

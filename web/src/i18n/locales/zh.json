@@ -817,7 +817,30 @@
     "confirmAction": "确认操作",
     "confirmDisable": "确定要禁用用户 {{username}} 吗？",
     "confirmEnable": "确定要启用用户 {{username}} 吗？",
-    "confirmResetPassword": "确定给用户 {{username}} 发送密码重置验证码吗？"
+    "confirmResetPassword": "确定给用户 {{username}} 发送密码重置验证码吗？",
+    "createUser": {
+      "action": "添加用户",
+      "title": "添加用户",
+      "description": "创建一个新的本地账号，默认为普通用户角色，创建后可通过「更改角色」调整权限。",
+      "usernameLabel": "用户名",
+      "usernamePlaceholder": "3-64 位字母、数字或下划线",
+      "usernameRequired": "请输入用户名",
+      "usernameInvalid": "用户名须为 3-64 位字母、数字或下划线",
+      "usernameExists": "用户名已存在",
+      "emailLabel": "邮箱",
+      "emailPlaceholder": "user@example.com",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "邮箱格式不正确",
+      "emailExists": "邮箱已被使用",
+      "passwordLabel": "初始密码",
+      "passwordPlaceholder": "至少 8 位，包含大小写字母、数字、符号中的 3 种",
+      "passwordRequired": "请输入初始密码",
+      "passwordTooShort": "密码至少 8 位",
+      "passwordTooWeak": "密码须包含大小写字母、数字、符号中的至少 3 种",
+      "passwordHint": "请将初始密码告知用户，建议登录后立即修改。",
+      "submit": "创建",
+      "submitting": "创建中..."
+    }
   },
   "adminLabels": {
     "title": "标签管理",

@@ -129,6 +129,56 @@ class UserManagementControllerTest {
     }
 
     @Test
+    void createUser_withUserAdminRole_returnsCreatedSummary() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+            "user-42", "admin", "admin@example.com", "", "github", Set.of("USER_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+            principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN"))
+        );
+
+        String requestBody = "{\"username\":\"dave\",\"password\":\"Abcd123!\",\"email\":\"dave@example.com\"}";
+
+        when(adminUserAppService.createUser("dave", "Abcd123!", "dave@example.com"))
+                .thenReturn(new AdminUserSummaryResponse(
+                        "user-9",
+                        "dave",
+                        "dave@example.com",
+                        "ACTIVE",
+                        List.of("USER"),
+                        Instant.parse("2026-03-13T09:00:00Z")));
+
+        mockMvc.perform(post("/api/v1/admin/users")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content(requestBody))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(0))
+            .andExpect(jsonPath("$.data.id").value("user-9"))
+            .andExpect(jsonPath("$.data.username").value("dave"))
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+    }
+
+    @Test
+    void createUser_withoutAdminRole_returns403() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+                "user-77", "skilladmin", "skilladmin@example.com", "", "github", Set.of("SKILL_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_SKILL_ADMIN"))
+        );
+
+        mockMvc.perform(post("/api/v1/admin/users")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content("{\"username\":\"dave\",\"password\":\"Abcd123!\",\"email\":\"dave@example.com\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
     void updateUserRole_withUserAdminRole_returns200() throws Exception {
         PlatformPrincipal principal = new PlatformPrincipal(
             "user-42", "admin", "admin@example.com", "", "github", Set.of("USER_ADMIN")

@@ -5,6 +5,7 @@ import com.iflytek.skillhub.auth.local.PasswordResetService;
 import com.iflytek.skillhub.auth.exception.AuthFlowException;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.session.PlatformSessionService;
+import com.iflytek.skillhub.config.LocalAuthRegistrationProperties;
 import com.iflytek.skillhub.dto.ApiResponse;
 import com.iflytek.skillhub.dto.ApiResponseFactory;
 import com.iflytek.skillhub.dto.AuthMeResponse;
@@ -40,6 +41,7 @@ public class LocalAuthController extends BaseApiController {
     private final AuthFailureThrottleService authFailureThrottleService;
     private final PasswordResetService passwordResetService;
     private final AuthMeResponseAssembler authMeResponseAssembler;
+    private final LocalAuthRegistrationProperties registrationProperties;
 
     public LocalAuthController(ApiResponseFactory responseFactory,
                                LocalAuthService localAuthService,
@@ -47,7 +49,8 @@ public class LocalAuthController extends BaseApiController {
                                PlatformSessionService platformSessionService,
                                AuthFailureThrottleService authFailureThrottleService,
                                PasswordResetService passwordResetService,
-                               AuthMeResponseAssembler authMeResponseAssembler) {
+                               AuthMeResponseAssembler authMeResponseAssembler,
+                               LocalAuthRegistrationProperties registrationProperties) {
         super(responseFactory);
         this.localAuthService = localAuthService;
         this.skillHubMetrics = skillHubMetrics;
@@ -55,12 +58,17 @@ public class LocalAuthController extends BaseApiController {
         this.authFailureThrottleService = authFailureThrottleService;
         this.passwordResetService = passwordResetService;
         this.authMeResponseAssembler = authMeResponseAssembler;
+        this.registrationProperties = registrationProperties;
     }
 
     @PostMapping("/register")
     @RateLimit(category = "auth-register", authenticated = 10, anonymous = 5, windowSeconds = 300)
     public ApiResponse<AuthMeResponse> register(@Valid @RequestBody LocalRegisterRequest request,
                                                 HttpServletRequest httpRequest) {
+        // 部署关闭自助注册时直接拒绝；账号只能由管理员通过后台接口创建
+        if (!registrationProperties.isRegistrationEnabled()) {
+            throw new AuthFlowException(HttpStatus.FORBIDDEN, "error.auth.local.registration.disabled");
+        }
         PlatformPrincipal principal = localAuthService.register(request.username(), request.password(), request.email());
         skillHubMetrics.incrementUserRegister();
         platformSessionService.establishSession(principal, httpRequest);

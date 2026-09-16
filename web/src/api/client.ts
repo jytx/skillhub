@@ -72,6 +72,7 @@ type RuntimeConfig = {
   authSessionBootstrapEnabled?: string
   authSessionBootstrapProvider?: string
   authSessionBootstrapAuto?: string
+  registrationEnabled?: string
 }
 
 declare global {
@@ -196,6 +197,18 @@ export function getSessionBootstrapRuntimeConfig(): SessionBootstrapRuntimeConfi
     provider: provider || undefined,
     auto: parseBooleanFlag(config.authSessionBootstrapAuto),
   }
+}
+
+/**
+ * 自助注册是否开放。与登录方式开关不同：未配置时默认开放，
+ * 保持既有部署行为不变；仅显式配置为 false 时才隐藏注册入口。
+ */
+export function isRegistrationEnabled(): boolean {
+  const value = getRuntimeConfig().registrationEnabled?.trim()
+  if (!value) {
+    return true
+  }
+  return parseBooleanFlag(value)
 }
 
 type ApiEnvelope<T> = {
@@ -1403,6 +1416,14 @@ export const adminApi = {
           createdAt: user.createdAt,
         })),
     }
+  },
+
+  async createUser(payload: { username: string; password: string; email: string }): Promise<void> {
+    await fetchJson<void>('/api/v1/admin/users', {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
   },
 
   async updateUserRole(userId: string, role: string): Promise<void> {

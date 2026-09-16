@@ -3,48 +3,23 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '@/api/client'
 import { LoginButton } from '@/features/auth/login-button'
+import {
+  countPasswordCharacterTypes,
+  EMAIL_PATTERN,
+  isDuplicateEmailError,
+  isDuplicateUsernameError,
+  USERNAME_PATTERN,
+} from '@/features/auth/local-account-rules'
 import { useLocalRegister } from '@/features/auth/use-local-auth'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Input } from '@/shared/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 
-const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,64}$/
-const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-
 type RegisterFieldErrors = {
   username?: string
   email?: string
   password?: string
-}
-
-function countPasswordCharacterTypes(password: string) {
-  let typeCount = 0
-  if (/[a-z]/.test(password)) {
-    typeCount += 1
-  }
-  if (/[A-Z]/.test(password)) {
-    typeCount += 1
-  }
-  if (/\d/.test(password)) {
-    typeCount += 1
-  }
-  if (/[^A-Za-z0-9]/.test(password)) {
-    typeCount += 1
-  }
-  return typeCount
-}
-
-function isDuplicateUsernameError(errorKey: string) {
-  return errorKey === 'error.auth.local.username.exists'
-    || errorKey.includes('Username already exists')
-    || errorKey.includes('用户名已存在')
-}
-
-function isDuplicateEmailError(errorKey: string) {
-  return errorKey === 'error.auth.local.email.exists'
-    || errorKey.includes('Email already exists')
-    || errorKey.includes('邮箱已存在')
 }
 
 /**

@@ -1952,6 +1952,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listUsers"];
+        put?: never;
+        post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{userId}/password-reset": {
         parameters: {
             query?: never;
@@ -4026,22 +4042,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listUsers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/skill-reports": {
         parameters: {
             query?: never;
@@ -5153,6 +5153,29 @@ export interface components {
             expiresIn?: number;
             /** Format: int32 */
             interval?: number;
+        };
+        AdminUserCreateRequest: {
+            username: string;
+            password: string;
+            email: string;
+        };
+        AdminUserSummaryResponse: {
+            id?: string;
+            username?: string;
+            email?: string;
+            status?: string;
+            platformRoles?: string[];
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ApiResponseAdminUserSummaryResponse: {
+            /** Format: int32 */
+            code?: number;
+            msg?: string;
+            data?: components["schemas"]["AdminUserSummaryResponse"];
+            /** Format: date-time */
+            timestamp?: string;
+            requestId?: string;
         };
         AdminSkillMutationResponse: {
             /** Format: int64 */
@@ -6405,15 +6428,6 @@ export interface components {
             provider?: string;
             displayName?: string;
             actionUrl?: string;
-        };
-        AdminUserSummaryResponse: {
-            id?: string;
-            username?: string;
-            email?: string;
-            status?: string;
-            platformRoles?: string[];
-            /** Format: date-time */
-            createdAt?: string;
         };
         ApiResponsePageResponseAdminUserSummaryResponse: {
             /** Format: int32 */
@@ -10497,6 +10511,55 @@ export interface operations {
             };
         };
     };
+    listUsers: {
+        parameters: {
+            query?: {
+                search?: string;
+                status?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageResponseAdminUserSummaryResponse"];
+                };
+            };
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminUserSummaryResponse"];
+                };
+            };
+        };
+    };
     triggerPasswordReset: {
         parameters: {
             query?: never;
@@ -13729,31 +13792,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseAuthMeResponse"];
-                };
-            };
-        };
-    };
-    listUsers: {
-        parameters: {
-            query?: {
-                search?: string;
-                status?: string;
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePageResponseAdminUserSummaryResponse"];
                 };
             };
         };

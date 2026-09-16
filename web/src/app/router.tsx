@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ComponentType } from 'react'
 import { createRouter, createRoute, createRootRoute, redirect } from '@tanstack/react-router'
 import { Layout } from './layout'
-import { getCurrentUser } from '@/api/client'
+import { getCurrentUser, isRegistrationEnabled } from '@/api/client'
 import { RoleGuard } from '@/shared/components/role-guard'
 import { RouteError } from '@/shared/components/route-error'
 import { createRequireAuth } from '@/shared/lib/auth-route'
@@ -246,6 +246,12 @@ const registerRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     returnTo: typeof search.returnTo === 'string' ? search.returnTo : '',
   }),
+  // 关闭自助注册后直接访问 /register 一律重定向回登录页，页面组件无需自行判断
+  beforeLoad: () => {
+    if (!isRegistrationEnabled()) {
+      throw redirect({ to: '/login' })
+    }
+  },
   component: RegisterPage,
 })
 

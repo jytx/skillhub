@@ -30,6 +30,7 @@ import {
 } from '@/shared/ui/dialog'
 import { Label } from '@/shared/ui/label'
 import { CopyButton } from '@/shared/components/copy-button'
+import { CreateUserDialog } from '@/features/admin/create-user-dialog'
 import {
   useAdminUsers,
   useApproveUser,
@@ -63,6 +64,7 @@ export function AdminUsersPage() {
   const [newRole, setNewRole] = useState('')
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<'ban' | 'unban' | 'reset'>('ban')
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const { data, isLoading } = useAdminUsers({
     search,
@@ -150,9 +152,12 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <div>
-        <h1 className="text-4xl font-bold font-heading mb-2">{t('adminUsers.title')}</h1>
-        <p className="text-muted-foreground text-lg">{t('adminUsers.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold font-heading mb-2">{t('adminUsers.title')}</h1>
+          <p className="text-muted-foreground text-lg">{t('adminUsers.subtitle')}</p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>{t('adminUsers.createUser.action')}</Button>
       </div>
 
       <Card className="p-5">
@@ -323,6 +328,8 @@ export function AdminUsersPage() {
           </div>
         </>
       )}
+
+      <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
    <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent>

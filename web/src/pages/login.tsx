@@ -2,7 +2,7 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff } from 'lucide-react'
-import { getDirectAuthRuntimeConfig } from '@/api/client'
+import { getDirectAuthRuntimeConfig, isRegistrationEnabled } from '@/api/client'
 import { LoginButton } from '@/features/auth/login-button'
 import { SessionBootstrapEntry } from '@/features/auth/session-bootstrap-entry'
 import { useAuthMethods } from '@/features/auth/use-auth-methods'
@@ -165,17 +165,19 @@ export function LoginPage() {
                       {t('login.forgotPassword')}
                     </Link>
                   </p>
-                  <p className="text-center text-sm text-muted-foreground">
-                    {t('login.noAccount')}
-                    {' '}
-                    <Link
-                      to="/register"
-                      search={{ returnTo }}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {t('login.register')}
-                    </Link>
-                  </p>
+                  {isRegistrationEnabled() ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                      {t('login.noAccount')}
+                      {' '}
+                      <Link
+                        to="/register"
+                        search={{ returnTo }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {t('login.register')}
+                      </Link>
+                    </p>
+                  ) : null}
                 </form>
               </TabsContent>
 

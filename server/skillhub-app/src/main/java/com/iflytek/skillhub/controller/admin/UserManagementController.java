@@ -3,6 +3,7 @@ package com.iflytek.skillhub.controller.admin;
 import com.iflytek.skillhub.controller.BaseApiController;
 import com.iflytek.skillhub.auth.local.PasswordResetService;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
+import com.iflytek.skillhub.dto.AdminUserCreateRequest;
 import com.iflytek.skillhub.dto.AdminUserMutationResponse;
 import com.iflytek.skillhub.dto.AdminUserRoleUpdateRequest;
 import com.iflytek.skillhub.dto.AdminUserStatusUpdateRequest;
@@ -44,6 +45,17 @@ public class UserManagementController extends BaseApiController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ok("response.success.read", adminUserAppService.listUsers(search, status, page, size));
+    }
+
+    /**
+     * 管理员直接创建本地账号，用于关闭自助注册后的人员入驻。
+     */
+    @PostMapping
+    @PreAuthorize("hasAnyRole('USER_ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<AdminUserSummaryResponse> createUser(
+            @Valid @RequestBody AdminUserCreateRequest request) {
+        return ok("response.success.created",
+                adminUserAppService.createUser(request.username(), request.password(), request.email()));
     }
 
     @PutMapping("/{userId}/role")

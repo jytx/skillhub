@@ -28,6 +28,10 @@ async function updateUserRole(userId: string, role: string): Promise<void> {
   await adminApi.updateUserRole(userId, role)
 }
 
+async function createUser(payload: { username: string; password: string; email: string }): Promise<void> {
+  await adminApi.createUser(payload)
+}
+
 async function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED'): Promise<void> {
   await adminApi.updateUserStatus(userId, status)
 }
@@ -36,6 +40,17 @@ export function useAdminUsers(params: AdminUsersParams) {
   return useQuery({
     queryKey: ['admin', 'users', params],
     queryFn: () => getAdminUsers(params),
+  })
+}
+
+export function useCreateAdminUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { username: string; password: string; email: string }) =>
+      createUser(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
   })
 }
 
