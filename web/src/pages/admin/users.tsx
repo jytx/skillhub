@@ -35,6 +35,7 @@ import { toast } from '@/shared/lib/toast'
 import { centeredToastOptions } from '@/shared/lib/toast'
 import { CreateUserDialog } from '@/features/admin/create-user-dialog'
 import { EditUserDialog } from '@/features/admin/edit-user-dialog'
+import { ImportUsersDialog } from '@/features/admin/import-users-dialog'
 import { UserTableActions } from '@/features/admin/user-table-actions'
 import {
   useAdminUsers,
@@ -73,6 +74,7 @@ export function AdminUsersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
 
   const { data, isLoading } = useAdminUsers({
     search,
@@ -208,7 +210,12 @@ export function AdminUsersPage() {
           <h1 className="text-4xl font-bold font-heading mb-2">{t('adminUsers.title')}</h1>
           <p className="text-muted-foreground text-lg">{t('adminUsers.subtitle')}</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>{t('adminUsers.createUser.action')}</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            {t('adminUsers.importUser.action')}
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>{t('adminUsers.createUser.action')}</Button>
+        </div>
       </div>
 
       <Card className="p-5">
@@ -349,6 +356,8 @@ export function AdminUsersPage() {
       )}
 
       <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+
+      <ImportUsersDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
 
       <EditUserDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} user={selectedUser} />
 

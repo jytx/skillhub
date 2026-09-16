@@ -50,6 +50,8 @@ import type {
   BatchMemberResponse,
   SkillSuite,
   SkillSuiteDraftInput,
+  AdminUserImportParseResult,
+  AdminUserImportResult,
 } from './types'
 import { ApiError } from '@/shared/lib/api-error'
 import i18n from '@/i18n/config'
@@ -1441,6 +1443,46 @@ export const adminApi = {
       method: 'DELETE',
       headers: await ensureCsrfHeaders(),
     })
+  },
+
+  async parseUserImport(file: File): Promise<AdminUserImportParseResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+    return fetchJson<AdminUserImportParseResult>('/api/v1/admin/users/import/parse', {
+      method: 'POST',
+      // multipart 由浏览器自动设置 Content-Type 与 boundary，不可手动指定
+      headers: await ensureCsrfHeaders(),
+      body: formData,
+    })
+  },
+
+  async importUsers(payload: {
+    rows: Array<{ rowNumber: number; username: string; password?: string | null; email: string }>
+  }): Promise<AdminUserImportResult> {
+    return fetchJson<AdminUserImportResult>('/api/v1/admin/users/import', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  /** 下载用户导入模板（.xlsx），通过临时链接触发浏览器保存 */
+  async downloadUserImportTemplate(): Promise<void> {
+    const response = await fetch(buildApiUrl('/api/v1/admin/users/import/template'), {
+      headers: withRequestHeaders(),
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to download template: ${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'skillhub-users-template.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   },
 
   async updateUserRole(userId: string, role: string): Promise<void> {

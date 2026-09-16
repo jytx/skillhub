@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/api/client'
 import type { AdminUser } from '@/api/types'
 export type { AdminUser } from '@/api/types'
+export type { AdminUserImportParseResult, AdminUserImportResult } from '@/api/types'
 
 /**
  * Admin user-management hooks for listing users and mutating their role or account status.
@@ -97,6 +98,26 @@ export function useDeleteAdminUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+}
+
+/** 上传 Excel 解析预览（只读，不创建账号） */
+export function useParseUserImport() {
+  return useMutation({
+    mutationFn: (file: File) => adminApi.parseUserImport(file),
+  })
+}
+
+/** 确认执行批量导入，成功后刷新用户列表 */
+export function useImportUsers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: {
+      rows: Array<{ rowNumber: number; username: string; password?: string | null; email: string }>
+    }) => adminApi.importUsers(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
     },

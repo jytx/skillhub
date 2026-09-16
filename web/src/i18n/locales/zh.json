@@ -864,6 +864,33 @@
       "confirm": "确定要删除用户 {{username}} 吗？该操作不可恢复，用户的凭据、令牌、收藏、通知等个人数据将一并清除。默认账号不可删除；名下有技能或待处理审核任务的用户需先处理相关数据。",
       "success": "用户 {{username}} 已删除",
       "failed": "删除用户 {{username}} 失败"
+    },
+    "importUser": {
+      "action": "导入用户",
+      "title": "批量导入用户",
+      "description": "上传 Excel 文件批量创建本地账号，单次最多 100 行。",
+      "uploadHint": "文件需为 .xlsx 格式，首行为表头（username、email 必需，password 可选；密码留空的行将自动生成随机密码）。建议先下载模板填写。",
+      "template": "下载模板",
+      "selectFile": "选择 Excel 文件",
+      "parsing": "解析中...",
+      "previewSummary": "共 {{total}} 行：{{valid}} 行有效，{{invalid}} 行有误（有误的行不会导入）",
+      "colRow": "行号",
+      "colPassword": "密码",
+      "passwordProvided": "已填写",
+      "passwordAuto": "自动生成",
+      "confirmImport": "导入 {{count}} 个有效用户",
+      "reselect": "重新选择文件",
+      "importing": "导入中...",
+      "resultTitle": "导入结果",
+      "resultSummary": "成功创建 {{created}} 个，失败 {{failed}} 个",
+      "colResult": "结果",
+      "copyPassword": "复制密码",
+      "copyAll": "复制全部账号密码",
+      "copiedAll": "已复制全部账号密码",
+      "done": "完成",
+      "importAgain": "再次导入",
+      "parseFailed": "解析文件失败",
+      "importFailed": "导入失败"
     }
   },
   "adminLabels": {
@@ -2082,6 +2109,30 @@
       "SKILL_ARCHIVED": "技能已归档",
       "VERSION_UNAVAILABLE": "版本不可用",
       "VISIBILITY_INCOMPATIBLE": "可见性不兼容"
+    }
+  },
+  "backendErrors": {
+    "validation": {
+      "auth": {
+        "local": {
+          "username": { "notBlank": "用户名不能为空" },
+          "email": { "notBlank": "邮箱不能为空", "invalid": "邮箱格式不正确" }
+        }
+      }
+    },
+    "error": {
+      "auth": {
+        "local": {
+          "username": { "invalid": "用户名须为 3-64 位字母、数字或下划线", "exists": "用户名已存在" },
+          "email": { "exists": "邮箱已被使用" },
+          "password": { "tooShort": "密码至少 8 位", "tooWeak": "密码至少需包含 3 种字符类型" }
+        }
+      },
+      "admin": {
+        "user": {
+          "import": { "duplicateRow": "与文件中前面的行重复" }
+        }
+      }
     }
   }
 }

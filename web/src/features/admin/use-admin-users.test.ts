@@ -28,6 +28,14 @@ describe('use-admin-users module exports', () => {
     expect(adminUsers.useDeleteAdminUser).toBeTypeOf('function')
   })
 
+  it('exports useParseUserImport mutation hook', () => {
+    expect(adminUsers.useParseUserImport).toBeTypeOf('function')
+  })
+
+  it('exports useImportUsers mutation hook', () => {
+    expect(adminUsers.useImportUsers).toBeTypeOf('function')
+  })
+
   it('exports useUpdateUserRole mutation hook', () => {
     expect(adminUsers.useUpdateUserRole).toBeTypeOf('function')
   })

@@ -79,6 +79,10 @@ vi.mock('@/features/admin/edit-user-dialog', () => ({
   EditUserDialog: () => null,
 }))
 
+vi.mock('@/features/admin/import-users-dialog', () => ({
+  ImportUsersDialog: () => null,
+}))
+
 const useAdminUsersMock = vi.fn()
 vi.mock('@/features/admin/use-admin-users', () => ({
   useAdminUsers: () => useAdminUsersMock(),
@@ -87,6 +91,8 @@ vi.mock('@/features/admin/use-admin-users', () => ({
   useDeleteAdminUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDisableUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useEnableUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useImportUsers: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useParseUserImport: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useTriggerUserPasswordReset: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateAdminUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateUserRole: () => ({ mutateAsync: vi.fn(), isPending: false }),

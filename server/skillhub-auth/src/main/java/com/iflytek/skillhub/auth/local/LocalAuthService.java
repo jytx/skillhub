@@ -12,10 +12,8 @@ import com.iflytek.skillhub.domain.user.UserStatus;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -30,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class LocalAuthService {
 
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]{3,64}$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
     // Precomputed BCrypt hash for "skillhub-local-auth-dummy". Used to blur timing
@@ -218,18 +214,15 @@ public class LocalAuthService {
     }
 
     private String normalizeUsername(String username) {
-        return username == null ? "" : username.trim().toLowerCase(Locale.ROOT);
+        return LocalAccountRules.normalizeUsername(username);
     }
 
     private String normalizeEmail(String email) {
-        if (email == null || email.isBlank()) {
-            return null;
-        }
-        return email.trim().toLowerCase(Locale.ROOT);
+        return LocalAccountRules.normalizeEmail(email);
     }
 
     private void validateUsername(String username) {
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
+        if (!LocalAccountRules.isUsernameValid(username)) {
             throw new AuthFlowException(HttpStatus.BAD_REQUEST, "error.auth.local.username.invalid");
         }
     }
@@ -238,7 +231,7 @@ public class LocalAuthService {
         if (email == null) {
             throw new AuthFlowException(HttpStatus.BAD_REQUEST, "validation.auth.local.email.notBlank");
         }
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
+        if (!LocalAccountRules.isEmailValid(email)) {
             throw new AuthFlowException(HttpStatus.BAD_REQUEST, "validation.auth.local.email.invalid");
         }
     }

@@ -864,6 +864,33 @@
       "confirm": "Delete user {{username}}? This action cannot be undone. Personal data such as credentials, tokens, stars, and notifications will be removed together. Default accounts cannot be deleted; users owning skills or pending reviews must be handled first.",
       "success": "User {{username}} has been deleted",
       "failed": "Failed to delete user {{username}}"
+    },
+    "importUser": {
+      "action": "Import Users",
+      "title": "Bulk Import Users",
+      "description": "Upload an Excel file to create local accounts in bulk, up to 100 rows at a time.",
+      "uploadHint": "The file must be .xlsx with a header row (username and email required, password optional; rows with a blank password get a random one generated). Download the template to get started.",
+      "template": "Download template",
+      "selectFile": "Choose Excel file",
+      "parsing": "Parsing...",
+      "previewSummary": "{{total}} rows total: {{valid}} valid, {{invalid}} with errors (rows with errors will be skipped)",
+      "colRow": "Row",
+      "colPassword": "Password",
+      "passwordProvided": "Provided",
+      "passwordAuto": "Auto-generated",
+      "confirmImport": "Import {{count}} valid users",
+      "reselect": "Choose another file",
+      "importing": "Importing...",
+      "resultTitle": "Import Results",
+      "resultSummary": "{{created}} created, {{failed}} failed",
+      "colResult": "Result",
+      "copyPassword": "Copy password",
+      "copyAll": "Copy all accounts & passwords",
+      "copiedAll": "All accounts & passwords copied",
+      "done": "Done",
+      "importAgain": "Import again",
+      "parseFailed": "Failed to parse the file",
+      "importFailed": "Import failed"
     }
   },
   "adminLabels": {
@@ -2083,6 +2110,30 @@
       "SKILL_ARCHIVED": "Skill archived",
       "VERSION_UNAVAILABLE": "Version unavailable",
       "VISIBILITY_INCOMPATIBLE": "Visibility incompatible"
+    }
+  },
+  "backendErrors": {
+    "validation": {
+      "auth": {
+        "local": {
+          "username": { "notBlank": "Username is required" },
+          "email": { "notBlank": "Email is required", "invalid": "Invalid email address" }
+        }
+      }
+    },
+    "error": {
+      "auth": {
+        "local": {
+          "username": { "invalid": "Username must be 3-64 characters: letters, digits, or underscores", "exists": "Username already exists" },
+          "email": { "exists": "Email is already in use" },
+          "password": { "tooShort": "Password must be at least 8 characters", "tooWeak": "Password must include at least 3 character types" }
+        }
+      },
+      "admin": {
+        "user": {
+          "import": { "duplicateRow": "Duplicate of an earlier row in this file" }
+        }
+      }
     }
   }
 }

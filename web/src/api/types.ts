@@ -634,6 +634,41 @@ export interface AdminUser {
   systemAccount?: boolean
 }
 
+/** Excel 导入解析（预览）的单行数据与校验结论 */
+export interface AdminUserImportRow {
+  rowNumber: number
+  username: string
+  email: string
+  /** 文件中填写的初始密码；null 表示留空，执行导入时由服务端生成 */
+  password?: string | null
+  valid: boolean
+  /** 行级错误的 i18n key，仅 valid=false 时有值 */
+  errorKey?: string | null
+}
+
+export interface AdminUserImportParseResult {
+  rows: AdminUserImportRow[]
+  totalRows: number
+  validCount: number
+  invalidCount: number
+}
+
+/** Excel 导入执行结果的单行结论 */
+export interface AdminUserImportRowResult {
+  rowNumber: number
+  username: string
+  success: boolean
+  /** 留空自动生成且创建成功时一次性返回的明文密码 */
+  generatedPassword?: string | null
+  errorKey?: string | null
+}
+
+export interface AdminUserImportResult {
+  results: AdminUserImportRowResult[]
+  createdCount: number
+  failedCount: number
+}
+
 export interface AuditLogItem {
   id: string
   userId?: string
