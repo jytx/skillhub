@@ -34,29 +34,7 @@ fi
 [[ -f "$ENV_FILE" ]] || { echo "ERROR: $ENV_FILE not found. Run scripts/release-up.sh first." >&2; exit 1; }
 
 cd "$ROOT_DIR"
-# --- 自动跟随最新构建产物（dist/latest-tag） --------------------------------
-# 行为：若 $ROOT_DIR/dist/latest-tag 存在（由 build-push-images.sh 写入），
-# 则以它为权威版本，自动同步到 $ENV_FILE 中的 SKILLHUB_VERSION，避免
-# "打了镜像但版本变量没跟上"导致容器仍跑旧版。期间会先校验私库确实有该 tag。
-# --- 自动跟随最新构建产物（dist/latest-tag） --------------------------------
-# 行为：若 $ROOT_DIR/dist/latest-tag 存在（由 build-push-images.sh 写入），
-# 则以它为权威版本，自动同步到 $ENV_FILE 中的 SKILLHUB_VERSION，避免
-# "打了镜像但版本变量没跟上"导致容器仍跑旧版。期间会先校验私库确实有该 tag。
-TAG_FILE="${TAG_FILE:-$ROOT_DIR/dist/latest-tag}"
-if [[ -f "$TAG_FILE" ]]; then
-  pinned_tag="$(tr -d '[:space:]' < "$TAG_FILE")"
-  current_tag="$(get_env_value SKILLHUB_VERSION 2>/dev/null || true)"
-  if [[ -n "$pinned_tag" && "$pinned_tag" != "$current_tag" ]]; then
-    # 用 docker manifest inspect 直接询问注册表，避免依赖 compose 的本地缓存
-    if docker manifest inspect "dockerhub.nobiliachina.com/common/skillhub-server:$pinned_tag" >/dev/null 2>&1; then
-      sed -i.bak -E "s|^SKILLHUB_VERSION=.*|SKILLHUB_VERSION=$pinned_tag|" "$ENV_FILE"
-      rm -f "$ENV_FILE.bak"
-      echo "==> Pinned SKILLHUB_VERSION=$pinned_tag from $TAG_FILE (synced to $ENV_FILE)"
-    else
-      echo "WARN: tag $pinned_tag not present in registry; keep current SKILLHUB_VERSION." >&2
-    fi
-  fi
-fi
+
 get_env_value() {  # key -> value (last occurrence); empty + rc 0 if missing
   grep "^${1}=" "$ENV_FILE" 2>/dev/null | tail -n1 | cut -d= -f2- || true
 }
@@ -70,6 +48,27 @@ running_digest() {  # service -> image digest currently used by its container
   docker images --digests --no-trunc --format '{{.Repository}}:{{.Tag}} {{.Digest}}' \
     | grep -F "$image" | head -n1 || true
 }
+
+# --- 自动跟随最新构建产物（dist/latest-tag） --------------------------------
+# 若 $ROOT_DIR/dist/latest-tag 存在（由 build-push-images.sh 写入）且与
+# $ENV_FILE 的 SKILLHUB_VERSION 不一致，先用 docker manifest inspect 校验
+# 私库确实存在该 tag（直接询问注册表，不依赖本地镜像缓存），通过后自动同步，
+# 避免"打了镜像但版本变量没跟上"导致容器仍跑旧版。
+# 注意：本段必须在 get_env_value 定义之后执行。
+TAG_FILE="${TAG_FILE:-$ROOT_DIR/dist/latest-tag}"
+if [[ -f "$TAG_FILE" ]]; then
+  pinned_tag="$(tr -d '[:space:]' < "$TAG_FILE")"
+  current_tag="$(get_env_value SKILLHUB_VERSION)"
+  if [[ -n "$pinned_tag" && "$pinned_tag" != "$current_tag" ]]; then
+    if docker manifest inspect "dockerhub.nobiliachina.com/common/skillhub-server:$pinned_tag" >/dev/null 2>&1; then
+      sed -i.bak -E "s|^SKILLHUB_VERSION=.*|SKILLHUB_VERSION=$pinned_tag|" "$ENV_FILE"
+      rm -f "$ENV_FILE.bak"
+      echo "==> Pinned SKILLHUB_VERSION=$pinned_tag from $TAG_FILE (synced to $ENV_FILE)"
+    else
+      echo "WARN: tag $pinned_tag not present in registry; keep current SKILLHUB_VERSION." >&2
+    fi
+  fi
+fi
 
 # --- snapshot before upgrade -------------------------------------------------
 BEFORE="$(for svc in server web skill-scanner; do
