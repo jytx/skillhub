@@ -15,4 +15,7 @@ public interface UserAccountRepository {
     Optional<UserAccount> findByEmailIgnoreCase(String email);
     Page<UserAccount> search(String keyword, UserStatus status, Pageable pageable);
     UserAccount save(UserAccount user);
+
+    /** 删除用户账号，仅供管理员删除流程在清理完关联数据后调用。 */
+    void delete(UserAccount user);
 }

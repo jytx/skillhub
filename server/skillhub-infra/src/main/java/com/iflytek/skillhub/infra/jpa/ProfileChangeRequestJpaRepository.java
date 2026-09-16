@@ -29,4 +29,6 @@ public interface ProfileChangeRequestJpaRepository
     @Override
     Optional<ProfileChangeRequest> findFirstByUserIdAndStatusInOrderByCreatedAtDesc(
             String userId, Collection<ProfileChangeStatus> statuses);
+
+    long deleteByUserId(String userId);
 }

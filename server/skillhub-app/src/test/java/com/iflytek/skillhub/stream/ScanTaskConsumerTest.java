@@ -870,6 +870,11 @@ class ScanTaskConsumerTest {
         }
 
         @Override
+        public boolean existsBySubmittedBy(String submittedBy) {
+            return false;
+        }
+
+        @Override
         public void deleteBySkillVersionIdIn(Collection<Long> skillVersionIds) {
             throw unsupported();
         }

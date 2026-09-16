@@ -6,8 +6,11 @@ import com.iflytek.skillhub.auth.local.LocalAuthService;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
+import com.iflytek.skillhub.domain.audit.AuditDetail;
+import com.iflytek.skillhub.domain.audit.AuditLogService;
 import com.iflytek.skillhub.domain.event.UserActivatedEvent;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
+import com.iflytek.skillhub.domain.shared.exception.DomainConflictException;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
 import com.iflytek.skillhub.domain.shared.exception.DomainNotFoundException;
 import com.iflytek.skillhub.domain.user.UserAccount;
@@ -16,6 +19,7 @@ import com.iflytek.skillhub.domain.user.UserStatus;
 import com.iflytek.skillhub.dto.AdminUserMutationResponse;
 import com.iflytek.skillhub.dto.AdminUserSummaryResponse;
 import com.iflytek.skillhub.dto.PageResponse;
+import com.iflytek.skillhub.observability.RequestIdAccessor;
 import com.iflytek.skillhub.repository.AdminUserSearchRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,6 +54,8 @@ public class AdminUserAppService {
     private final RoleRepository roleRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final LocalAuthService localAuthService;
+    private final AuditLogService auditLogService;
+    private final RequestIdAccessor requestIdAccessor;
 
     public AdminUserAppService(
             AdminUserSearchRepository adminUserSearchRepository,
@@ -57,13 +63,17 @@ public class AdminUserAppService {
             UserRoleBindingRepository userRoleBindingRepository,
             RoleRepository roleRepository,
             ApplicationEventPublisher eventPublisher,
-            LocalAuthService localAuthService) {
+            LocalAuthService localAuthService,
+            AuditLogService auditLogService,
+            RequestIdAccessor requestIdAccessor) {
         this.adminUserSearchRepository = adminUserSearchRepository;
         this.userAccountRepository = userAccountRepository;
         this.userRoleBindingRepository = userRoleBindingRepository;
         this.roleRepository = roleRepository;
         this.eventPublisher = eventPublisher;
         this.localAuthService = localAuthService;
+        this.auditLogService = auditLogService;
+        this.requestIdAccessor = requestIdAccessor;
     }
 
     /**
@@ -76,13 +86,33 @@ public class AdminUserAppService {
         PlatformPrincipal principal = localAuthService.register(username, password, email);
         UserAccount user = loadUser(principal.userId());
         List<String> roles = loadRolesByUserId(List.of(user.getId())).getOrDefault(user.getId(), List.of());
-        return new AdminUserSummaryResponse(
-                user.getId(),
-                user.getDisplayName(),
-                user.getEmail(),
-                user.getStatus().name(),
-                roles,
-                user.getCreatedAt());
+        return toSummary(user, roles);
+    }
+
+    /**
+     * 管理员编辑用户资料，仅允许修改显示名与邮箱。系统账号不可编辑；
+     * 邮箱按忽略大小写查重，排除用户自身后不得与其他账号重复。
+     */
+    @Transactional
+    public AdminUserSummaryResponse updateUser(String userId,
+                                               String displayName,
+                                               String email,
+                                               String actorUserId,
+                                               AuditRequestContext auditContext) {
+        UserAccount user = loadUser(userId);
+        rejectSystemAccountMutation(user);
+        String normalizedEmail = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+        userAccountRepository.findByEmailIgnoreCase(normalizedEmail)
+                .filter(existing -> !existing.getId().equals(user.getId()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException("error.admin.user.email.exists", normalizedEmail);
+                });
+        user.setDisplayName(displayName == null ? null : displayName.trim());
+        user.setEmail(normalizedEmail);
+        UserAccount saved = userAccountRepository.save(user);
+        recordAudit("ADMIN_USER_UPDATE", actorUserId, saved, auditContext);
+        List<String> roles = loadRolesByUserId(List.of(saved.getId())).getOrDefault(saved.getId(), List.of());
+        return toSummary(saved, roles);
     }
 
     @Transactional(readOnly = true)
@@ -97,13 +127,9 @@ public class AdminUserAppService {
                 result.getContent().stream().map(UserAccount::getId).toList());
 
         List<AdminUserSummaryResponse> items = result.getContent().stream()
-                .map(user -> new AdminUserSummaryResponse(
-                        user.getId(),
-                        user.getDisplayName(),
-                        user.getEmail(),
-                        user.getStatus().name(),
-                        rolesByUserId.getOrDefault(user.getId(), List.of()),
-                        user.getCreatedAt()))
+                .map(user -> toSummary(
+                        user,
+                        rolesByUserId.getOrDefault(user.getId(), List.of())))
                 .toList();
 
         return new PageResponse<>(items, result.getTotalElements(), result.getNumber(), result.getSize());
@@ -203,6 +229,33 @@ public class AdminUserAppService {
     private UserAccount loadUser(String userId) {
         return userAccountRepository.findById(userId)
                 .orElseThrow(() -> new DomainNotFoundException("error.admin.user.notFound", userId));
+    }
+
+    private AdminUserSummaryResponse toSummary(UserAccount user, List<String> roles) {
+        return new AdminUserSummaryResponse(
+                user.getId(),
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getStatus().name(),
+                roles,
+                user.getCreatedAt(),
+                user.isSystemAccount());
+    }
+
+    /**
+     * 用户管理操作的审计记录。用户 id 是字符串而 audit_log.target_id 是长整型，
+     * 因此 targetId 传 null、把目标用户信息放进 detailJson。
+     */
+    private void recordAudit(String action, String actorUserId, UserAccount targetUser, AuditRequestContext auditContext) {
+        auditLogService.record(
+                actorUserId,
+                action,
+                "USER",
+                null,
+                requestIdAccessor.current(),
+                auditContext != null ? auditContext.clientIp() : null,
+                auditContext != null ? auditContext.userAgent() : null,
+                AuditDetail.of("userId", targetUser.getId(), "username", targetUser.getDisplayName()));
     }
 
     private void rejectSystemAccountMutation(UserAccount user) {

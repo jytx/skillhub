@@ -4,8 +4,9 @@ import * as adminUsers from './use-admin-users'
 /**
  * use-admin-users exports interfaces (AdminUsersParams, PagedAdminUsers) for typing,
  * a type re-export (AdminUser), and several thin hooks: useAdminUsers (query),
- * useUpdateUserRole, useUpdateUserStatus, useApproveUser, useDisableUser, useEnableUser
- * (mutations). All mutations invalidate ['admin', 'users'] and ['auth', 'me'] caches.
+ * useCreateAdminUser, useUpdateAdminUser, useDeleteAdminUser, useUpdateUserRole,
+ * useUpdateUserStatus, useApproveUser, useDisableUser, useEnableUser (mutations).
+ * All mutations invalidate ['admin', 'users'] and ['auth', 'me'] caches.
  *
  * There are no exported pure functions or data transformations to unit-test.
  * This file verifies the public API surface so that accidental export removals are caught.
@@ -13,6 +14,18 @@ import * as adminUsers from './use-admin-users'
 describe('use-admin-users module exports', () => {
   it('exports useAdminUsers query hook', () => {
     expect(adminUsers.useAdminUsers).toBeTypeOf('function')
+  })
+
+  it('exports useCreateAdminUser mutation hook', () => {
+    expect(adminUsers.useCreateAdminUser).toBeTypeOf('function')
+  })
+
+  it('exports useUpdateAdminUser mutation hook', () => {
+    expect(adminUsers.useUpdateAdminUser).toBeTypeOf('function')
+  })
+
+  it('exports useDeleteAdminUser mutation hook', () => {
+    expect(adminUsers.useDeleteAdminUser).toBeTypeOf('function')
   })
 
   it('exports useUpdateUserRole mutation hook', () => {

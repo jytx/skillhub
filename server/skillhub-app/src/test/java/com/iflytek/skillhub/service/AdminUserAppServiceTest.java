@@ -7,13 +7,16 @@ import com.iflytek.skillhub.auth.local.LocalAuthService;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
+import com.iflytek.skillhub.domain.audit.AuditLogService;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
+import com.iflytek.skillhub.domain.shared.exception.DomainConflictException;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
 import com.iflytek.skillhub.domain.shared.exception.DomainNotFoundException;
 import com.iflytek.skillhub.domain.user.UserAccount;
 import com.iflytek.skillhub.domain.user.UserAccountRepository;
 import com.iflytek.skillhub.domain.user.UserStatus;
 import com.iflytek.skillhub.dto.PageResponse;
+import com.iflytek.skillhub.observability.RequestIdAccessor;
 import com.iflytek.skillhub.repository.AdminUserSearchRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,7 +34,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 class AdminUserAppServiceTest {
@@ -42,13 +47,17 @@ class AdminUserAppServiceTest {
     private final UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
     private final LocalAuthService localAuthService = mock(LocalAuthService.class);
+    private final AuditLogService auditLogService = mock(AuditLogService.class);
+    private final RequestIdAccessor requestIdAccessor = mock(RequestIdAccessor.class);
     private final AdminUserAppService service = new AdminUserAppService(
             adminUserSearchRepository,
             userAccountRepository,
             userRoleBindingRepository,
             roleRepository,
             eventPublisher,
-            localAuthService
+            localAuthService,
+            auditLogService,
+            requestIdAccessor
     );
 
     @Test
@@ -215,6 +224,75 @@ class AdminUserAppServiceTest {
         when(userAccountRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThrows(DomainNotFoundException.class, () -> service.updateUserStatus("missing", "DISABLED"));
+    }
+
+    @Test
+    void updateUser_updatesDisplayNameAndEmail() {
+        UserAccount user = user("user-1", "alice", "alice@example.com", UserStatus.ACTIVE);
+        when(userAccountRepository.findById("user-1")).thenReturn(Optional.of(user));
+        when(userAccountRepository.findByEmailIgnoreCase("new@example.com")).thenReturn(Optional.empty());
+        when(userAccountRepository.save(user)).thenReturn(user);
+        when(userRoleBindingRepository.findByUserIdIn(List.of("user-1"))).thenReturn(List.of());
+
+        var response = service.updateUser(
+                "user-1", "alice_new", "New@Example.com", "admin-1", null);
+
+        verify(userAccountRepository).save(user);
+        // 邮箱按忽略大小写归一化后保存，显示名去除首尾空白
+        assertThat(user.getDisplayName()).isEqualTo("alice_new");
+        assertThat(user.getEmail()).isEqualTo("new@example.com");
+        assertThat(response.username()).isEqualTo("alice_new");
+        assertThat(response.email()).isEqualTo("new@example.com");
+        verify(auditLogService).record(eq("admin-1"), eq("ADMIN_USER_UPDATE"), eq("USER"), isNull(),
+                isNull(), isNull(), isNull(), anyString());
+    }
+
+    @Test
+    void updateUser_keepsEmailWhenItBelongsToTheSameUser() {
+        UserAccount user = user("user-1", "alice", "alice@example.com", UserStatus.ACTIVE);
+        when(userAccountRepository.findById("user-1")).thenReturn(Optional.of(user));
+        // 查重命中的是用户自己的记录，不应视为冲突
+        when(userAccountRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
+        when(userAccountRepository.save(user)).thenReturn(user);
+        when(userRoleBindingRepository.findByUserIdIn(List.of("user-1"))).thenReturn(List.of());
+
+        var response = service.updateUser(
+                "user-1", "alice", "alice@example.com", "admin-1", null);
+
+        assertThat(response.email()).isEqualTo("alice@example.com");
+    }
+
+    @Test
+    void updateUser_withEmailOwnedByAnotherUser_throwsConflict() {
+        UserAccount other = user("user-2", "bob", "bob@example.com", UserStatus.ACTIVE);
+        when(userAccountRepository.findById("user-1"))
+                .thenReturn(Optional.of(user("user-1", "alice", "alice@example.com", UserStatus.ACTIVE)));
+        when(userAccountRepository.findByEmailIgnoreCase("bob@example.com")).thenReturn(Optional.of(other));
+
+        assertThrows(DomainConflictException.class,
+                () -> service.updateUser("user-1", "alice", "bob@example.com", "admin-1", null));
+
+        verify(userAccountRepository, never()).save(any(UserAccount.class));
+    }
+
+    @Test
+    void updateUser_rejectsSystemAccount() {
+        when(userAccountRepository.findById("builtin-skill-publisher"))
+                .thenReturn(Optional.of(systemUser()));
+
+        assertThrows(DomainForbiddenException.class,
+                () -> service.updateUser(
+                        "builtin-skill-publisher", "renamed", "renamed@example.com", "admin-1", null));
+
+        verify(userAccountRepository, never()).save(any(UserAccount.class));
+    }
+
+    @Test
+    void updateUser_withUnknownUser_throwsNotFound() {
+        when(userAccountRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(DomainNotFoundException.class,
+                () -> service.updateUser("missing", "alice", "alice@example.com", "admin-1", null));
     }
 
     private UserAccount user(String id, String displayName, String email, UserStatus status) {

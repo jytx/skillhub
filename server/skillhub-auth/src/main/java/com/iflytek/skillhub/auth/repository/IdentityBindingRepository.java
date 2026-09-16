@@ -12,4 +12,7 @@ import java.util.Optional;
 public interface IdentityBindingRepository extends JpaRepository<IdentityBinding, Long> {
     Optional<IdentityBinding> findByProviderCodeAndSubject(String providerCode, String subject);
     java.util.List<IdentityBinding> findByUserId(String userId);
+
+    /** 删除该用户的全部外部身份绑定，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

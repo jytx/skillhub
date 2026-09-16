@@ -838,8 +838,32 @@
       "passwordTooShort": "Password must be at least 8 characters",
       "passwordTooWeak": "Password must include at least 3 character types",
       "passwordHint": "Share the initial password with the user and advise changing it after first login.",
+      "generatePassword": "Generate & copy password",
+      "passwordGenerated": "Random password generated and copied to clipboard",
+      "passwordCopyFailed": "Password generated, but copying to clipboard failed; copy it manually",
       "submit": "Create",
       "submitting": "Creating..."
+    },
+    "editUser": {
+      "action": "Edit",
+      "title": "Edit User",
+      "description": "Update the username and email of {{username}}. Login name, role, status, and password are managed by their dedicated actions.",
+      "usernameLabel": "Username",
+      "usernameRequired": "Username is required",
+      "usernameInvalid": "Username must be 3-64 characters: letters, digits, or underscores",
+      "emailLabel": "Email",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email address",
+      "emailExists": "Email is already in use by another account",
+      "submit": "Save",
+      "submitting": "Saving..."
+    },
+    "deleteUser": {
+      "action": "Delete",
+      "title": "Delete User",
+      "confirm": "Delete user {{username}}? This action cannot be undone. Personal data such as credentials, tokens, stars, and notifications will be removed together. Default accounts cannot be deleted; users owning skills or pending reviews must be handled first.",
+      "success": "User {{username}} has been deleted",
+      "failed": "Failed to delete user {{username}}"
     }
   },
   "adminLabels": {

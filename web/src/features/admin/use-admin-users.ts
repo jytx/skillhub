@@ -32,6 +32,17 @@ async function createUser(payload: { username: string; password: string; email: 
   await adminApi.createUser(payload)
 }
 
+async function updateUserProfile(
+  userId: string,
+  payload: { displayName: string; email: string },
+): Promise<void> {
+  await adminApi.updateUser(userId, payload)
+}
+
+async function deleteUser(userId: string): Promise<void> {
+  await adminApi.deleteUser(userId)
+}
+
 async function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED'): Promise<void> {
   await adminApi.updateUserStatus(userId, status)
 }
@@ -64,6 +75,30 @@ export function useUpdateUserRole() {
       // edits their own account.
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+    },
+  })
+}
+
+export function useUpdateAdminUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, payload }: {
+      userId: string
+      payload: { displayName: string; email: string }
+    }) => updateUserProfile(userId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+    },
+  })
+}
+
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
     },
   })
 }

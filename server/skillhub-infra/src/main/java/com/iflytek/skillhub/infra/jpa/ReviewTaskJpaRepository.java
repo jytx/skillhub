@@ -53,6 +53,8 @@ public interface ReviewTaskJpaRepository extends JpaRepository<ReviewTask, Long>
 
     boolean existsByNamespaceId(Long namespaceId);
 
+    boolean existsBySubmittedBy(String submittedBy);
+
     void deleteBySkillVersionIdIn(Collection<Long> skillVersionIds);
 
     void deleteBySkillId(Long skillId);

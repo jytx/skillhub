@@ -58,13 +58,37 @@ vi.mock('@/shared/ui/label', () => ({
   Label: ({ children }: { children: unknown }) => children,
 }))
 
+vi.mock('@/shared/components/copy-button', () => ({
+  CopyButton: () => null,
+}))
+
+vi.mock('@/shared/components/confirm-dialog', () => ({
+  ConfirmDialog: () => null,
+}))
+
+vi.mock('@/shared/lib/toast', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
+  centeredToastOptions: () => ({}),
+}))
+
+vi.mock('@/features/admin/create-user-dialog', () => ({
+  CreateUserDialog: () => null,
+}))
+
+vi.mock('@/features/admin/edit-user-dialog', () => ({
+  EditUserDialog: () => null,
+}))
+
 const useAdminUsersMock = vi.fn()
 vi.mock('@/features/admin/use-admin-users', () => ({
   useAdminUsers: () => useAdminUsersMock(),
   useApproveUser: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreateAdminUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteAdminUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDisableUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useEnableUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useTriggerUserPasswordReset: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateAdminUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateUserRole: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
@@ -95,5 +119,40 @@ describe('AdminUsersPage', () => {
     const html = renderToStaticMarkup(<AdminUsersPage />)
     expect(html).toContain('adminUsers.title')
     expect(html).toContain('adminUsers.subtitle')
+  })
+
+  it('renders edit and delete actions, hiding delete for system accounts', () => {
+    useAdminUsersMock.mockReturnValue({
+      data: {
+        items: [
+          {
+            userId: 'user-1',
+            username: 'alice',
+            email: 'alice@example.com',
+            platformRoles: ['USER'],
+            status: 'ACTIVE',
+            createdAt: '2026-03-13T09:00:00Z',
+          },
+          {
+            userId: 'builtin-skill-publisher',
+            username: 'publisher',
+            platformRoles: [],
+            status: 'ACTIVE',
+            createdAt: '2026-03-13T09:00:00Z',
+            systemAccount: true,
+          },
+        ],
+        total: 2,
+        page: 0,
+        size: 20,
+      },
+      isLoading: false,
+    })
+
+    const html = renderToStaticMarkup(<AdminUsersPage />)
+    // 普通用户与系统账号都有编辑入口
+    expect(html).toContain('adminUsers.editUser.action')
+    // 删除入口只出现一次：系统账号（builtin-skill-publisher）不渲染删除按钮
+    expect(html.match(/adminUsers\.deleteUser\.action/g)).toHaveLength(1)
   })
 })

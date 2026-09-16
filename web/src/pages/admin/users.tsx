@@ -30,10 +30,16 @@ import {
 } from '@/shared/ui/dialog'
 import { Label } from '@/shared/ui/label'
 import { CopyButton } from '@/shared/components/copy-button'
+import { ConfirmDialog } from '@/shared/components/confirm-dialog'
+import { toast } from '@/shared/lib/toast'
+import { centeredToastOptions } from '@/shared/lib/toast'
 import { CreateUserDialog } from '@/features/admin/create-user-dialog'
+import { EditUserDialog } from '@/features/admin/edit-user-dialog'
+import { UserTableActions } from '@/features/admin/user-table-actions'
 import {
   useAdminUsers,
   useApproveUser,
+  useDeleteAdminUser,
   useDisableUser,
   useEnableUser,
   useTriggerUserPasswordReset,
@@ -65,6 +71,8 @@ export function AdminUsersPage() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<'ban' | 'unban' | 'reset'>('ban')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const { data, isLoading } = useAdminUsers({
     search,
@@ -78,6 +86,14 @@ export function AdminUsersPage() {
   const disableUserMutation = useDisableUser()
   const enableUserMutation = useEnableUser()
   const triggerPasswordResetMutation = useTriggerUserPasswordReset()
+  const deleteUserMutation = useDeleteAdminUser()
+
+  const rowActionBusy =
+    approveUserMutation.isPending
+    || disableUserMutation.isPending
+    || enableUserMutation.isPending
+    || triggerPasswordResetMutation.isPending
+    || deleteUserMutation.isPending
 
   const formatDate = (dateString: string) => {
     return formatLocalDateTime(dateString, i18n.language)
@@ -120,6 +136,41 @@ export function AdminUsersPage() {
     setSelectedUser(user)
     setActionType('reset')
     setConfirmDialogOpen(true)
+  }
+
+  const handleEditUser = (user: AdminUser) => {
+    setSelectedUser(user)
+    setEditDialogOpen(true)
+  }
+
+  const handleDeleteUser = (user: AdminUser) => {
+    setSelectedUser(user)
+    setDeleteDialogOpen(true)
+  }
+
+  /** 删除用户后若当前页被删空且不是首页，则回退一页避免停留在空页 */
+  const confirmDeleteUser = async () => {
+    if (!selectedUser) return
+    try {
+      await deleteUserMutation.mutateAsync(selectedUser.userId)
+      if ((data?.items.length ?? 0) <= 1 && page > 0) {
+        setPage(page - 1)
+      }
+      toast.success(
+        t('adminUsers.deleteUser.success', { username: selectedUser.username }),
+        undefined,
+        centeredToastOptions(),
+      )
+      setDeleteDialogOpen(false)
+      setSelectedUser(null)
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      toast.error(
+        t('adminUsers.deleteUser.failed', { username: selectedUser.username }),
+        error instanceof Error ? error.message : undefined,
+        centeredToastOptions(),
+      )
+    }
   }
 
   const confirmRoleChange = async () => {
@@ -254,48 +305,16 @@ export function AdminUsersPage() {
                     <TableCell>{user.platformRoles.join(', ')}</TableCell>
                     <TableCell>{formatDate(user.createdAt)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleChangeRole(user)}
-                        >
-                          {t('adminUsers.changeRole')}
-                        </Button>
-                        {user.status === 'PENDING' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => approveUserMutation.mutate(user.userId)}
-                          >
-                            {t('adminUsers.approveUser')}
-                          </Button>
-                        )}
-                        {user.status === 'ACTIVE' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleStatus(user, 'ban')}
-                          >
-                            {t('adminUsers.disable')}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleStatus(user, 'unban')}
-                          >
-                            {t('adminUsers.enable')}
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleTriggerPasswordReset(user)}
-                        >
-                          {t('adminUsers.resetPassword')}
-                        </Button>
-                      </div>
+                      <UserTableActions
+                        user={user}
+                        onEdit={handleEditUser}
+                        onChangeRole={handleChangeRole}
+                        onApprove={(target) => approveUserMutation.mutate(target.userId)}
+                        onToggleStatus={handleToggleStatus}
+                        onResetPassword={handleTriggerPasswordReset}
+                        onDelete={handleDeleteUser}
+                        busy={rowActionBusy}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -330,6 +349,19 @@ export function AdminUsersPage() {
       )}
 
       <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+
+      <EditUserDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} user={selectedUser} />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={t('adminUsers.deleteUser.title')}
+        description={t('adminUsers.deleteUser.confirm', { username: selectedUser?.username ?? '' })}
+        confirmText={t('dialog.delete')}
+        variant="destructive"
+        onConfirm={confirmDeleteUser}
+        confirmButtonTestId="admin-user-delete-confirm"
+      />
 
    <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent>

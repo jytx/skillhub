@@ -12,5 +12,9 @@ public interface SkillSubscriptionRepository {
     void deleteBySkillId(Long skillId);
     Page<SkillSubscription> findByUserId(String userId, Pageable pageable);
     List<SkillSubscription> findAllBySkillId(Long skillId);
+    /** 该用户的全部订阅记录（不分页），供删除用户时重算技能计数使用。 */
+    List<SkillSubscription> findAllByUserId(String userId);
+    /** 删除该用户的全部订阅，返回删除条数。 */
+    long deleteByUserId(String userId);
     long countBySkillId(Long skillId);
 }

@@ -36,6 +36,7 @@ vi.mock('@/shared/lib/api-error', () => ({
 
 import {
   WEB_API_PREFIX,
+  adminApi,
   buildApiUrl,
   fetchText,
   getAppBaseUrl,
@@ -164,6 +165,63 @@ describe('namespaceApi.delete', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/api/web/namespaces/team-delete',
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.any(Headers),
+      }),
+    )
+  })
+})
+
+describe('adminUser mutations', () => {
+  function stubEnvelopeFetch() {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        code: 0,
+        msg: 'ok',
+        data: null,
+        timestamp: '2026-09-16T00:00:00Z',
+        requestId: 'req-test',
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('updateUser sends a PUT request with the profile payload', async () => {
+    window.__SKILLHUB_RUNTIME_CONFIG__ = { apiBaseUrl: 'https://api.example.com' }
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      writable: true,
+      value: { cookie: 'XSRF-TOKEN=test-token' },
+    })
+    const fetchMock = stubEnvelopeFetch()
+
+    await adminApi.updateUser('user-1', { displayName: 'alice_new', email: 'new@example.com' })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/api/v1/admin/users/user-1',
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.any(Headers),
+      }),
+    )
+  })
+
+  it('deleteUser sends a DELETE request to the user endpoint', async () => {
+    window.__SKILLHUB_RUNTIME_CONFIG__ = { apiBaseUrl: 'https://api.example.com' }
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      writable: true,
+      value: { cookie: 'XSRF-TOKEN=test-token' },
+    })
+    const fetchMock = stubEnvelopeFetch()
+
+    await adminApi.deleteUser('user-1')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/api/v1/admin/users/user-1',
       expect.objectContaining({
         method: 'DELETE',
         headers: expect.any(Headers),

@@ -14,4 +14,6 @@ public interface UserNotificationRepository {
     List<UserNotification> findByUserIdOrderByCreatedAtDesc(String userId);
     Page<UserNotification> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
     long countByUserIdAndStatus(String userId, UserNotificationStatus status);
+    /** 删除该用户的全部治理通知，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

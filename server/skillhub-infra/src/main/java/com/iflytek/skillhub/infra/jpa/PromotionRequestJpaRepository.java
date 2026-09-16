@@ -25,6 +25,8 @@ public interface PromotionRequestJpaRepository extends JpaRepository<PromotionRe
 
     Page<PromotionRequest> findByStatus(ReviewTaskStatus status, Pageable pageable);
 
+    boolean existsBySubmittedBy(String submittedBy);
+
     @Query(
             value = """
                 SELECT p

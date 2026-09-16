@@ -838,8 +838,32 @@
       "passwordTooShort": "密码至少 8 位",
       "passwordTooWeak": "密码须包含大小写字母、数字、符号中的至少 3 种",
       "passwordHint": "请将初始密码告知用户，建议登录后立即修改。",
+      "generatePassword": "生成随机密码并复制",
+      "passwordGenerated": "随机密码已生成并复制到剪贴板",
+      "passwordCopyFailed": "密码已生成，但复制到剪贴板失败，请手动复制",
       "submit": "创建",
       "submitting": "创建中..."
+    },
+    "editUser": {
+      "action": "编辑",
+      "title": "编辑用户",
+      "description": "更新用户 {{username}} 的用户名与邮箱；登录名、角色、状态和密码由各自独立入口管理。",
+      "usernameLabel": "用户名",
+      "usernameRequired": "请输入用户名",
+      "usernameInvalid": "用户名须为 3-64 位字母、数字或下划线",
+      "emailLabel": "邮箱",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "邮箱格式不正确",
+      "emailExists": "邮箱已被其他账号使用",
+      "submit": "保存",
+      "submitting": "保存中..."
+    },
+    "deleteUser": {
+      "action": "删除",
+      "title": "删除用户",
+      "confirm": "确定要删除用户 {{username}} 吗？该操作不可恢复，用户的凭据、令牌、收藏、通知等个人数据将一并清除。默认账号不可删除；名下有技能或待处理审核任务的用户需先处理相关数据。",
+      "success": "用户 {{username}} 已删除",
+      "failed": "删除用户 {{username}} 失败"
     }
   },
   "adminLabels": {

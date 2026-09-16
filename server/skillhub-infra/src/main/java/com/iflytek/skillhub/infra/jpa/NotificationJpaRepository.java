@@ -42,4 +42,9 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
     @Transactional
     @Query("DELETE FROM Notification n WHERE n.status = :status AND n.createdAt < :before")
     int deleteByStatusAndCreatedAtBefore(NotificationStatus status, Instant before);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Notification n WHERE n.recipientId = :recipientId")
+    long deleteByRecipientId(String recipientId);
 }

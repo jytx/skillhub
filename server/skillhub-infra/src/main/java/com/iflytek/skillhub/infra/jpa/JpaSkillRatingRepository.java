@@ -41,4 +41,8 @@ public interface JpaSkillRatingRepository extends JpaRepository<SkillRating, Lon
     int countBySkillId(Long skillId);
 
     void deleteBySkillId(Long skillId);
+
+    java.util.List<SkillRating> findAllByUserId(String userId);
+
+    long deleteByUserId(String userId);
 }

@@ -17,6 +17,8 @@ public interface PromotionRequestRepository {
     Page<PromotionRequest> findHistoryByStatusOrderByReviewedAtAsc(ReviewTaskStatus status, Pageable pageable);
     Page<PromotionRequest> findHistoryByStatusOrderByReviewedAtDesc(ReviewTaskStatus status, Pageable pageable);
     boolean existsByTargetNamespaceId(Long namespaceId);
+    /** 该用户是否提交过晋级请求，用于删除用户前的关联数据检查。 */
+    boolean existsBySubmittedBy(String submittedBy);
     void deleteBySourceSkillIdOrTargetSkillId(Long sourceSkillId, Long targetSkillId);
     int updateStatusWithVersion(Long id, ReviewTaskStatus status, String reviewedBy,
                                String reviewComment, Long targetSkillId, Integer expectedVersion);

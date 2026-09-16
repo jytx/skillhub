@@ -25,4 +25,5 @@ public interface NamespaceMemberJpaRepository
     List<NamespaceMember> findByNamespaceIdAndUserIdIn(Long namespaceId, Collection<String> userIds);
     void deleteByNamespaceId(Long namespaceId);
     void deleteByNamespaceIdAndUserId(Long namespaceId, String userId);
+    long deleteByUserId(String userId);
 }

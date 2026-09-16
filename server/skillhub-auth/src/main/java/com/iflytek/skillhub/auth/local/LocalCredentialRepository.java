@@ -17,4 +17,7 @@ public interface LocalCredentialRepository extends JpaRepository<LocalCredential
     boolean existsByUsernameIgnoreCase(String username);
 
     boolean existsByUserId(String userId);
+
+    /** 删除该用户的本地登录凭据，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

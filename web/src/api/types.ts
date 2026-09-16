@@ -630,6 +630,8 @@ export interface AdminUser {
   platformRoles: string[]
   status: string
   createdAt: string
+  /** 内置系统账号标记，此类账号不提供删除入口 */
+  systemAccount?: boolean
 }
 
 export interface AuditLogItem {

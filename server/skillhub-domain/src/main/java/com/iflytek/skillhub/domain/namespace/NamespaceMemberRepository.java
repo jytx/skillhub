@@ -19,4 +19,6 @@ public interface NamespaceMemberRepository {
     NamespaceMember save(NamespaceMember member);
     void deleteByNamespaceId(Long namespaceId);
     void deleteByNamespaceIdAndUserId(Long namespaceId, String userId);
+    /** 删除某用户在所有命名空间下的成员关系，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

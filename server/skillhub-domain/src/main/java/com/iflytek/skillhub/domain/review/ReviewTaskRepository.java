@@ -38,6 +38,8 @@ public interface ReviewTaskRepository {
         throw new UnsupportedOperationException("Typed review subjects are not supported by this repository");
     }
     boolean existsByNamespaceId(Long namespaceId);
+    /** 该用户是否提交过审核任务，用于删除用户前的关联数据检查。 */
+    boolean existsBySubmittedBy(String submittedBy);
     void deleteBySkillVersionIdIn(Collection<Long> skillVersionIds);
     void deleteBySkillId(Long skillId);
     void deleteBySubjectTypeAndSubjectId(ReviewSubjectType subjectType, Long subjectId);

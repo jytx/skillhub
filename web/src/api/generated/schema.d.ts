@@ -406,6 +406,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateUser"];
+        post?: never;
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{userId}/status": {
         parameters: {
             query?: never;
@@ -4689,6 +4705,29 @@ export interface components {
             expiresAt?: string;
             lastUsedAt?: string;
         };
+        AdminUserUpdateRequest: {
+            displayName: string;
+            email: string;
+        };
+        AdminUserSummaryResponse: {
+            id?: string;
+            username?: string;
+            email?: string;
+            status?: string;
+            platformRoles?: string[];
+            /** Format: date-time */
+            createdAt?: string;
+            systemAccount?: boolean;
+        };
+        ApiResponseAdminUserSummaryResponse: {
+            /** Format: int32 */
+            code?: number;
+            msg?: string;
+            data?: components["schemas"]["AdminUserSummaryResponse"];
+            /** Format: date-time */
+            timestamp?: string;
+            requestId?: string;
+        };
         AdminUserStatusUpdateRequest: {
             status: string;
         };
@@ -5158,24 +5197,6 @@ export interface components {
             username: string;
             password: string;
             email: string;
-        };
-        AdminUserSummaryResponse: {
-            id?: string;
-            username?: string;
-            email?: string;
-            status?: string;
-            platformRoles?: string[];
-            /** Format: date-time */
-            createdAt?: string;
-        };
-        ApiResponseAdminUserSummaryResponse: {
-            /** Format: int32 */
-            code?: number;
-            msg?: string;
-            data?: components["schemas"]["AdminUserSummaryResponse"];
-            /** Format: date-time */
-            timestamp?: string;
-            requestId?: string;
         };
         AdminSkillMutationResponse: {
             /** Format: int64 */
@@ -7864,6 +7885,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseTokenSummaryResponse"];
+                };
+            };
+        };
+    };
+    updateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminUserSummaryResponse"];
+                };
+            };
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };

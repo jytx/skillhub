@@ -19,4 +19,7 @@ public interface ApiTokenRepository extends JpaRepository<ApiToken, Long> {
     Page<ApiToken> findByUserIdAndRevokedAtIsNullOrderByCreatedAtDesc(String userId, Pageable pageable);
     boolean existsByUserIdAndRevokedAtIsNullAndNameIgnoreCase(String userId, String name);
     Optional<ApiToken> findByUserIdAndNameIgnoreCaseAndRevokedAtIsNull(String userId, String name);
+
+    /** 删除该用户的全部 API 令牌，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

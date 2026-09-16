@@ -29,4 +29,7 @@ public interface ProfileChangeRequestRepository {
     /** Find the most recent request for a user with any of the given statuses. */
     Optional<ProfileChangeRequest> findFirstByUserIdAndStatusInOrderByCreatedAtDesc(
             String userId, Collection<ProfileChangeStatus> statuses);
+
+    /** 删除该用户的全部资料变更请求，供删除用户流程使用。 */
+    long deleteByUserId(String userId);
 }

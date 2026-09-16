@@ -9,6 +9,7 @@ import com.iflytek.skillhub.dto.AdminUserMutationResponse;
 import com.iflytek.skillhub.dto.AdminUserSummaryResponse;
 import com.iflytek.skillhub.dto.PageResponse;
 import com.iflytek.skillhub.service.AdminUserAppService;
+import com.iflytek.skillhub.service.AdminUserDeletionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,12 +27,15 @@ import java.util.Set;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +56,9 @@ class UserManagementControllerTest {
 
     @MockBean
     private AdminUserAppService adminUserAppService;
+
+    @MockBean
+    private AdminUserDeletionService adminUserDeletionService;
 
     @MockBean
     private PasswordResetService passwordResetService;
@@ -80,7 +87,8 @@ class UserManagementControllerTest {
                                 "alice@example.com",
                                 "ACTIVE",
                                 List.of("AUDITOR"),
-                                Instant.parse("2026-03-13T09:00:00Z"))),
+                                Instant.parse("2026-03-13T09:00:00Z"),
+                                false)),
                         1,
                         0,
                         20));
@@ -146,7 +154,8 @@ class UserManagementControllerTest {
                         "dave@example.com",
                         "ACTIVE",
                         List.of("USER"),
-                        Instant.parse("2026-03-13T09:00:00Z")));
+                        Instant.parse("2026-03-13T09:00:00Z"),
+                        false));
 
         mockMvc.perform(post("/api/v1/admin/users")
                 .with(authentication(auth))
@@ -296,6 +305,115 @@ class UserManagementControllerTest {
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"));
 
         verify(adminUserAppService).updateUserStatus("user-123", "ACTIVE");
+    }
+
+    @Test
+    void updateUser_withUserAdminRole_returnsUpdatedSummary() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+            "user-42", "admin", "admin@example.com", "", "github", Set.of("USER_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+            principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN"))
+        );
+
+        when(adminUserAppService.updateUser(
+                eq("user-123"), eq("alice_new"), eq("new@example.com"),
+                eq("user-42"), any()))
+                .thenReturn(new AdminUserSummaryResponse(
+                        "user-123",
+                        "alice_new",
+                        "new@example.com",
+                        "ACTIVE",
+                        List.of("USER"),
+                        Instant.parse("2026-03-13T09:00:00Z"),
+                        false));
+
+        mockMvc.perform(put("/api/v1/admin/users/user-123")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content("{\"displayName\":\"alice_new\",\"email\":\"new@example.com\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(0))
+            .andExpect(jsonPath("$.data.id").value("user-123"))
+            .andExpect(jsonPath("$.data.username").value("alice_new"))
+            .andExpect(jsonPath("$.data.email").value("new@example.com"));
+    }
+
+    @Test
+    void updateUser_withInvalidBody_returns400() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+            "user-42", "admin", "admin@example.com", "", "github", Set.of("USER_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+            principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN"))
+        );
+
+        mockMvc.perform(put("/api/v1/admin/users/user-123")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content("{\"displayName\":\"a\",\"email\":\"not-an-email\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUser_withoutAdminRole_returns403() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+                "user-77", "skilladmin", "skilladmin@example.com", "", "github", Set.of("SKILL_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_SKILL_ADMIN"))
+        );
+
+        mockMvc.perform(put("/api/v1/admin/users/user-123")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content("{\"displayName\":\"alice_new\",\"email\":\"new@example.com\"}"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    void deleteUser_withUserAdminRole_delegatesAndReturns200() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+            "user-42", "admin", "admin@example.com", "", "github", Set.of("USER_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+            principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN"))
+        );
+
+        mockMvc.perform(delete("/api/v1/admin/users/user-123")
+                .with(authentication(auth))
+                .with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(0));
+
+        verify(adminUserDeletionService).deleteUser(eq("user-123"), eq("user-42"), any());
+    }
+
+    @Test
+    void deleteUser_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(delete("/api/v1/admin/users/user-123").with(csrf()))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void deleteUser_withoutAdminRole_returns403() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal(
+                "user-77", "skilladmin", "skilladmin@example.com", "", "github", Set.of("SKILL_ADMIN")
+        );
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_SKILL_ADMIN"))
+        );
+
+        mockMvc.perform(delete("/api/v1/admin/users/user-123")
+                .with(authentication(auth))
+                .with(csrf()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
     }
 
     @Test

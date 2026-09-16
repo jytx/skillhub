@@ -1396,6 +1396,7 @@ export const adminApi = {
         platformRoles?: string[]
         status: string
         createdAt: string
+        systemAccount?: boolean
       }>
       total: number
       page: number
@@ -1414,6 +1415,7 @@ export const adminApi = {
           platformRoles: user.platformRoles ?? [],
           status: user.status,
           createdAt: user.createdAt,
+          systemAccount: user.systemAccount ?? false,
         })),
     }
   },
@@ -1423,6 +1425,21 @@ export const adminApi = {
       method: 'POST',
       headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
+    })
+  },
+
+  async updateUser(userId: string, payload: { displayName: string; email: string }): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: await ensureCsrfHeaders(),
     })
   },
 

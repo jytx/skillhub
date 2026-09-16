@@ -16,5 +16,7 @@ public interface JpaSkillStarRepository extends JpaRepository<SkillStar, Long>, 
     Optional<SkillStar> findBySkillIdAndUserId(Long skillId, String userId);
     void deleteBySkillId(Long skillId);
     Page<SkillStar> findByUserId(String userId, Pageable pageable);
+    java.util.List<SkillStar> findAllByUserId(String userId);
+    long deleteByUserId(String userId);
     long countBySkillId(Long skillId);
 }

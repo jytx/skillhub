@@ -13,4 +13,10 @@ public interface AccountMergeRequestRepository extends JpaRepository<AccountMerg
     Optional<AccountMergeRequest> findByIdAndPrimaryUserId(Long id, String primaryUserId);
 
     boolean existsBySecondaryUserIdAndStatus(String secondaryUserId, String status);
+
+    /** 该用户是否作为主账号出现在任何合并请求中，供删除用户前的关联数据检查。 */
+    boolean existsByPrimaryUserId(String primaryUserId);
+
+    /** 该用户是否作为待合并账号出现在任何合并请求中，供删除用户前的关联数据检查。 */
+    boolean existsBySecondaryUserId(String secondaryUserId);
 }

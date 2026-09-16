@@ -16,5 +16,7 @@ public interface JpaSkillSubscriptionRepository extends JpaRepository<SkillSubsc
     void deleteBySkillId(Long skillId);
     Page<SkillSubscription> findByUserId(String userId, Pageable pageable);
     List<SkillSubscription> findAllBySkillId(Long skillId);
+    List<SkillSubscription> findAllByUserId(String userId);
+    long deleteByUserId(String userId);
     long countBySkillId(Long skillId);
 }
