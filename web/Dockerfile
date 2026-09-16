@@ -1,7 +1,8 @@
 # The frontend output is static and architecture-neutral. Build it on the
 # Buildx host so linux/riscv64 does not depend on a target-architecture Node.js
 # image; only the multi-architecture Nginx runtime is target-specific.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS build
+# 基础镜像使用 DaoCloud 国内加速源全限定名，任意国内环境可直接 docker build
+FROM --platform=$BUILDPLATFORM docker.m.daocloud.io/library/node:22-alpine AS build
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
@@ -11,7 +12,7 @@ ARG VITE_BASE_PATH=/__SKILLHUB_WEB_BASE_PATH__/
 ENV VITE_BASE_PATH=$VITE_BASE_PATH
 RUN pnpm build
 
-FROM nginx:alpine
+FROM docker.m.daocloud.io/library/nginx:alpine
 ENV SKILLHUB_TRUST_FORWARDED_PROTO=false
 # Record a fixed build-time base so the entrypoint defaults SKILLHUB_WEB_BASE_PATH
 # to it and generates matching Nginx routing without repeating the value at runtime.

@@ -1,6 +1,7 @@
 # Build the architecture-neutral JAR on the Buildx host. This avoids emulating
 # the complete Maven build when the target image is linux/riscv64.
-FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine AS build
+# 基础镜像使用 DaoCloud 国内加速源全限定名，任意国内环境可直接 docker build
+FROM --platform=$BUILDPLATFORM docker.m.daocloud.io/library/eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 
 # Cache dependencies
@@ -14,15 +15,16 @@ COPY skillhub-notification/pom.xml skillhub-notification/
 COPY skillhub-app/pom.xml skillhub-app/
 COPY mvnw .
 COPY .mvn .mvn
-RUN ./mvnw dependency:go-offline -B
+# Maven 本地仓库走 BuildKit 缓存挂载：依赖跨构建持久复用，不进镜像层
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2 ./mvnw dependency:go-offline -B
 
 COPY . .
-RUN ./mvnw package -DskipTests -B
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2 ./mvnw package -DskipTests -B
 
 # ---- Runtime Stage ----
 # The Noble variant publishes a linux/riscv64 image; the Alpine JRE currently
 # used by this project is limited to amd64 and arm64.
-FROM eclipse-temurin:21-jre-noble
+FROM docker.m.daocloud.io/library/eclipse-temurin:21-jre-noble
 # Keep the Alpine image's numeric IDs so existing storage volumes remain writable.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends wget && \
