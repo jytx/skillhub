@@ -4,11 +4,15 @@ import { ApiError } from '@/api/client'
 import {
   countPasswordCharacterTypes,
   EMAIL_PATTERN,
+  generateRandomPassword,
   isDuplicateEmailError,
   isDuplicateUsernameError,
   USERNAME_PATTERN,
 } from '@/features/auth/local-account-rules'
 import { useCreateAdminUser } from '@/features/admin/use-admin-users'
+import { copyToClipboard } from '@/shared/lib/clipboard'
+import { toast } from '@/shared/lib/toast'
+import { centeredToastOptions } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
 import {
   Dialog,
@@ -34,6 +38,9 @@ type CreateUserFormState = {
 }
 
 const EMPTY_FORM: CreateUserFormState = { username: '', email: '', password: '' }
+
+/** 随机生成初始密码的长度：足够强度且便于复制传递 */
+const GENERATED_PASSWORD_LENGTH = 16
 
 interface CreateUserDialogProps {
   /** 对话框开关，由父页面持有 */
@@ -121,6 +128,27 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     return {}
   }
 
+  /** 生成符合密码策略的随机初始密码，填充表单并复制到剪贴板 */
+  async function handleGeneratePassword() {
+    const password = generateRandomPassword(GENERATED_PASSWORD_LENGTH)
+    updateField('password', password)
+    try {
+      await copyToClipboard(password)
+      toast.success(
+        t('adminUsers.createUser.passwordGenerated'),
+        undefined,
+        centeredToastOptions(),
+      )
+    } catch (error) {
+      console.error('Failed to copy generated password:', error)
+      toast.warning(
+        t('adminUsers.createUser.passwordCopyFailed'),
+        undefined,
+        centeredToastOptions(),
+      )
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextFieldErrors: CreateUserFieldErrors = {
@@ -192,7 +220,16 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="create-user-password">{t('adminUsers.createUser.passwordLabel')}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="create-user-password">{t('adminUsers.createUser.passwordLabel')}</Label>
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={handleGeneratePassword}
+              >
+                {t('adminUsers.createUser.generatePassword')}
+              </button>
+            </div>
             <Input
               id="create-user-password"
               type="password"

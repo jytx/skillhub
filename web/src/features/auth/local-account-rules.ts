@@ -39,3 +39,55 @@ export function isDuplicateEmailError(errorKey: string): boolean {
     || errorKey.includes('Email already exists')
     || errorKey.includes('邮箱已存在')
 }
+
+/** 随机密码可用的字符池：大小写字母、数字，以及不易与命令行/JSON 转义冲突的符号 */
+const PASSWORD_CHAR_POOLS: ReadonlyArray<readonly string[]> = [
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  'abcdefghijklmnopqrstuvwxyz'.split(''),
+  '0123456789'.split(''),
+  '!@#$%^&*-_'.split(''),
+]
+
+/**
+ * 用加密安全随机源（crypto.getRandomValues）生成 [0, maxExclusive) 的均匀随机整数。
+ * 通过拒绝采样消除取模偏差，保证每个取值概率严格相等。
+ */
+function randomIndex(maxExclusive: number): number {
+  const limit = Math.floor(0x100000000 / maxExclusive) * maxExclusive
+  const buffer = new Uint32Array(1)
+  let value: number
+  do {
+    crypto.getRandomValues(buffer)
+    value = buffer[0]
+  } while (value >= limit)
+  return value % maxExclusive
+}
+
+function pickRandomChar(chars: readonly string[]): string {
+  return chars[randomIndex(chars.length)]
+}
+
+/**
+ * 生成随机初始密码：保证包含大小写字母、数字、符号各至少一个，
+ * 天然满足“至少 8 位且至少 3 种字符类型”的密码策略，然后整体洗牌打散固定位置。
+ */
+export function generateRandomPassword(length: number): string {
+  const poolCount = PASSWORD_CHAR_POOLS.length
+  if (length < poolCount) {
+    throw new Error(`Password length must be at least ${poolCount}`)
+  }
+  // 每个字符池先各取一个，剩余位从全量字符池随机取
+  const chars: string[] = PASSWORD_CHAR_POOLS.map((pool) => pickRandomChar(pool))
+  const allChars: string[] = PASSWORD_CHAR_POOLS.flat()
+  for (let i = poolCount; i < length; i += 1) {
+    chars.push(pickRandomChar(allChars))
+  }
+  // Fisher-Yates 洗牌，避免前几位总是固定来自特定字符池
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const j = randomIndex(i + 1)
+    const temp = chars[i]
+    chars[i] = chars[j]
+    chars[j] = temp
+  }
+  return chars.join('')
+}
