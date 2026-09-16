@@ -137,6 +137,11 @@ export function ImportUsersDialog({ open, onOpenChange }: ImportUsersDialogProps
       toast.success(t('adminUsers.importUser.copiedAll'), undefined, centeredToastOptions())
     } catch (error) {
       console.error('Failed to copy accounts:', error)
+      toast.error(
+        t('adminUsers.importUser.copyFailed'),
+        undefined,
+        centeredToastOptions(),
+      )
     }
   }
 

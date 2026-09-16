@@ -887,6 +887,7 @@
       "copyPassword": "Copy password",
       "copyAll": "Copy all accounts & passwords",
       "copiedAll": "All accounts & passwords copied",
+      "copyFailed": "Failed to copy to clipboard; select the text manually",
       "done": "Done",
       "importAgain": "Import again",
       "parseFailed": "Failed to parse the file",
@@ -1623,7 +1624,8 @@
   },
   "copyButton": {
     "copied": "Copied",
-    "copy": "Copy"
+    "copy": "Copy",
+    "copyFailed": "Copy failed, select manually"
   },
   "pagination": {
     "label": "Pagination",

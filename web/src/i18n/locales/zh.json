@@ -887,6 +887,7 @@
       "copyPassword": "复制密码",
       "copyAll": "复制全部账号密码",
       "copiedAll": "已复制全部账号密码",
+      "copyFailed": "复制到剪贴板失败，请手动选中文本复制",
       "done": "完成",
       "importAgain": "再次导入",
       "parseFailed": "解析文件失败",
@@ -1622,7 +1623,8 @@
   },
   "copyButton": {
     "copied": "已复制",
-    "copy": "复制"
+    "copy": "复制",
+    "copyFailed": "复制失败，请手动复制"
   },
   "pagination": {
     "label": "分页导航",
