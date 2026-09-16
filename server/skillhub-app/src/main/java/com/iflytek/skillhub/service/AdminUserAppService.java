@@ -6,6 +6,7 @@ import com.iflytek.skillhub.auth.local.LocalAuthService;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
+import com.iflytek.skillhub.bootstrap.BootstrapAdminProperties;
 import com.iflytek.skillhub.domain.audit.AuditDetail;
 import com.iflytek.skillhub.domain.audit.AuditLogService;
 import com.iflytek.skillhub.domain.event.UserActivatedEvent;
@@ -33,6 +34,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,6 +58,7 @@ public class AdminUserAppService {
     private final LocalAuthService localAuthService;
     private final AuditLogService auditLogService;
     private final RequestIdAccessor requestIdAccessor;
+    private final BootstrapAdminProperties bootstrapAdminProperties;
 
     public AdminUserAppService(
             AdminUserSearchRepository adminUserSearchRepository,
@@ -65,7 +68,8 @@ public class AdminUserAppService {
             ApplicationEventPublisher eventPublisher,
             LocalAuthService localAuthService,
             AuditLogService auditLogService,
-            RequestIdAccessor requestIdAccessor) {
+            RequestIdAccessor requestIdAccessor,
+            BootstrapAdminProperties bootstrapAdminProperties) {
         this.adminUserSearchRepository = adminUserSearchRepository;
         this.userAccountRepository = userAccountRepository;
         this.userRoleBindingRepository = userRoleBindingRepository;
@@ -74,6 +78,7 @@ public class AdminUserAppService {
         this.localAuthService = localAuthService;
         this.auditLogService = auditLogService;
         this.requestIdAccessor = requestIdAccessor;
+        this.bootstrapAdminProperties = bootstrapAdminProperties;
     }
 
     /**
@@ -239,7 +244,14 @@ public class AdminUserAppService {
                 user.getStatus().name(),
                 roles,
                 user.getCreatedAt(),
-                user.isSystemAccount());
+                user.isSystemAccount(),
+                isDeletable(user));
+    }
+
+    /** 删除保护的后端统一判定：内置系统账号与引导管理员账号不可删除 */
+    private boolean isDeletable(UserAccount user) {
+        return !user.isSystemAccount()
+                && !Objects.equals(user.getId(), bootstrapAdminProperties.getUserId());
     }
 
     /**

@@ -1399,6 +1399,7 @@ export const adminApi = {
         status: string
         createdAt: string
         systemAccount?: boolean
+        deletable?: boolean
       }>
       total: number
       page: number
@@ -1418,6 +1419,7 @@ export const adminApi = {
           status: user.status,
           createdAt: user.createdAt,
           systemAccount: user.systemAccount ?? false,
+          deletable: user.deletable ?? true,
         })),
     }
   },

@@ -7,6 +7,7 @@ import com.iflytek.skillhub.auth.local.LocalAuthService;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.auth.repository.RoleRepository;
 import com.iflytek.skillhub.auth.repository.UserRoleBindingRepository;
+import com.iflytek.skillhub.bootstrap.BootstrapAdminProperties;
 import com.iflytek.skillhub.domain.audit.AuditLogService;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
 import com.iflytek.skillhub.domain.shared.exception.DomainConflictException;
@@ -49,6 +50,7 @@ class AdminUserAppServiceTest {
     private final LocalAuthService localAuthService = mock(LocalAuthService.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
     private final RequestIdAccessor requestIdAccessor = mock(RequestIdAccessor.class);
+    private final BootstrapAdminProperties bootstrapAdminProperties = new BootstrapAdminProperties();
     private final AdminUserAppService service = new AdminUserAppService(
             adminUserSearchRepository,
             userAccountRepository,
@@ -57,7 +59,8 @@ class AdminUserAppServiceTest {
             eventPublisher,
             localAuthService,
             auditLogService,
-            requestIdAccessor
+            requestIdAccessor,
+            bootstrapAdminProperties
     );
 
     @Test
@@ -118,6 +121,27 @@ class AdminUserAppServiceTest {
 
         assertThat(response.items().get(0)).extracting("platformRoles")
                 .isEqualTo(List.of("USER"));
+    }
+
+    @Test
+    void listUsers_marksSystemAndBootstrapAdminAccountsNotDeletable() {
+        bootstrapAdminProperties.setUserId("docker-admin");
+        UserAccount normal = user("user-1", "alice", "alice@example.com", UserStatus.ACTIVE);
+        UserAccount admin = user("docker-admin", "admin", "admin@example.com", UserStatus.ACTIVE);
+        UserAccount system = systemUser();
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        when(adminUserSearchRepository.search(null, null, pageable))
+                .thenReturn(new PageImpl<>(List.of(normal, admin, system), pageable, 3));
+        when(userRoleBindingRepository.findByUserIdIn(any())).thenReturn(List.of());
+
+        PageResponse<?> response = service.listUsers(null, null, 0, 20);
+
+        assertThat(response.items().get(0)).extracting("id", "deletable")
+                .containsExactly("user-1", true);
+        assertThat(response.items().get(1)).extracting("id", "deletable")
+                .containsExactly("docker-admin", false);
+        assertThat(response.items().get(2)).extracting("id", "deletable")
+                .containsExactly("builtin-skill-publisher", false);
     }
 
     @Test

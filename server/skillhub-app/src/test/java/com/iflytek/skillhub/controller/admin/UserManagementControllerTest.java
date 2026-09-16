@@ -88,7 +88,8 @@ class UserManagementControllerTest {
                                 "ACTIVE",
                                 List.of("AUDITOR"),
                                 Instant.parse("2026-03-13T09:00:00Z"),
-                                false)),
+                                false,
+                                true)),
                         1,
                         0,
                         20));
@@ -155,7 +156,8 @@ class UserManagementControllerTest {
                         "ACTIVE",
                         List.of("USER"),
                         Instant.parse("2026-03-13T09:00:00Z"),
-                        false));
+                        false,
+                        true));
 
         mockMvc.perform(post("/api/v1/admin/users")
                 .with(authentication(auth))
@@ -326,7 +328,8 @@ class UserManagementControllerTest {
                         "ACTIVE",
                         List.of("USER"),
                         Instant.parse("2026-03-13T09:00:00Z"),
-                        false));
+                        false,
+                        true));
 
         mockMvc.perform(put("/api/v1/admin/users/user-123")
                 .with(authentication(auth))

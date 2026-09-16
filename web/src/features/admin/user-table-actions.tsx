@@ -24,7 +24,8 @@ interface UserTableActionsProps {
 /**
  * 用户管理表格的操作列：编辑、变更角色、审批、禁用/启用、重置密码、删除。
  *
- * 删除入口对内置系统账号隐藏（后端同样强制保护，前端仅做展示层收敛）。
+ * 删除入口按后端计算的 deletable 标志收敛：内置系统账号与引导管理员账号
+ * 不显示删除按钮（后端同样强制保护，前端仅做展示层收敛）。
  */
 export function UserTableActions({
   user,
@@ -63,7 +64,7 @@ export function UserTableActions({
       <Button variant="outline" size="sm" disabled={busy} onClick={() => onResetPassword(user)}>
         {t('adminUsers.resetPassword')}
       </Button>
-      {!user.systemAccount && (
+      {user.deletable === false ? null : (
         <Button variant="destructive" size="sm" disabled={busy} onClick={() => onDelete(user)}>
           {t('adminUsers.deleteUser.action')}
         </Button>

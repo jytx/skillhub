@@ -4766,6 +4766,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             systemAccount?: boolean;
+            deletable?: boolean;
         };
         ApiResponseAdminUserSummaryResponse: {
             /** Format: int32 */

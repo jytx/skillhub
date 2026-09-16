@@ -127,7 +127,7 @@ describe('AdminUsersPage', () => {
     expect(html).toContain('adminUsers.subtitle')
   })
 
-  it('renders edit and delete actions, hiding delete for system accounts', () => {
+  it('hides delete for accounts the backend marks not deletable', () => {
     useAdminUsersMock.mockReturnValue({
       data: {
         items: [
@@ -140,15 +140,25 @@ describe('AdminUsersPage', () => {
             createdAt: '2026-03-13T09:00:00Z',
           },
           {
+            userId: 'docker-admin',
+            username: 'admin',
+            platformRoles: ['SUPER_ADMIN'],
+            status: 'ACTIVE',
+            createdAt: '2026-03-13T09:00:00Z',
+            systemAccount: false,
+            deletable: false,
+          },
+          {
             userId: 'builtin-skill-publisher',
             username: 'publisher',
             platformRoles: [],
             status: 'ACTIVE',
             createdAt: '2026-03-13T09:00:00Z',
             systemAccount: true,
+            deletable: false,
           },
         ],
-        total: 2,
+        total: 3,
         page: 0,
         size: 20,
       },
@@ -158,7 +168,7 @@ describe('AdminUsersPage', () => {
     const html = renderToStaticMarkup(<AdminUsersPage />)
     // 普通用户与系统账号都有编辑入口
     expect(html).toContain('adminUsers.editUser.action')
-    // 删除入口只出现一次：系统账号（builtin-skill-publisher）不渲染删除按钮
+    // 删除入口只出现一次：引导管理员（docker-admin）与系统账号均不渲染删除按钮
     expect(html.match(/adminUsers\.deleteUser\.action/g)).toHaveLength(1)
   })
 })

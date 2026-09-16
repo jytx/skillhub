@@ -630,8 +630,10 @@ export interface AdminUser {
   platformRoles: string[]
   status: string
   createdAt: string
-  /** 内置系统账号标记，此类账号不提供删除入口 */
+  /** 内置系统账号标记 */
   systemAccount?: boolean
+  /** 后端统一计算的删除许可：系统账号与引导管理员为 false，前端据此隐藏删除入口 */
+  deletable?: boolean
 }
 
 /** Excel 导入解析（预览）的单行数据与校验结论 */
