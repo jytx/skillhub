@@ -60,43 +60,39 @@ describe('copyToClipboard', () => {
     expect(execCommand).toHaveBeenCalledWith('copy')
   })
 
-  it('focuses and selects the fallback textarea, then restores focus', async () => {
+  it('selects a hidden span via Range (no focus change) before execCommand', async () => {
     stubClipboard(undefined)
     const execCommand = stubExecCommand(true)
-    const focusSpy = vi.fn()
-    const selectRangeSpy = vi.fn()
-    const activeElement = document.createElement('button')
-    document.body.appendChild(activeElement)
-    activeElement.focus = focusSpy
-    activeElement.focus()
-    const originalCreateElement = document.createElement.bind(document)
-    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
-      const element = originalCreateElement(tag)
-      if (tag === 'textarea') {
-        const textarea = element as HTMLTextAreaElement
-        textarea.focus = focusSpy
-        textarea.setSelectionRange = selectRangeSpy
-        return textarea
-      }
-      return element
-    })
+    const addRangeSpy = vi.fn()
+    const removeAllRangesSpy = vi.fn()
+    const selectNodeContentsSpy = vi.fn()
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      addRange: addRangeSpy,
+      removeAllRanges: removeAllRangesSpy,
+    } as unknown as Selection)
+    vi.spyOn(document, 'createRange').mockReturnValue({
+      selectNodeContents: selectNodeContentsSpy,
+    } as unknown as Range)
 
-    try {
-      await copyToClipboard('secret')
-    } finally {
-      createElementSpy.mockRestore()
-      document.body.removeChild(activeElement)
-    }
+    await copyToClipboard('secret')
 
-    // 聚焦 + 编程选中文本后才执行复制，并把焦点归还原元素
-    expect(selectRangeSpy).toHaveBeenCalledWith(0, 'secret'.length)
+    // Range 选中隐藏 span → 清空并应用选区 → 复制 → 清理选区；全程不动焦点
+    expect(selectNodeContentsSpy).toHaveBeenCalled()
+    expect(addRangeSpy).toHaveBeenCalled()
     expect(execCommand).toHaveBeenCalledWith('copy')
-    expect(focusSpy).toHaveBeenCalled()
+    expect(removeAllRangesSpy).toHaveBeenCalledTimes(2)
   })
 
   it('throws when the execCommand fallback reports failure', async () => {
     stubClipboard(undefined)
     stubExecCommand(false)
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      addRange: vi.fn(),
+      removeAllRanges: vi.fn(),
+    } as unknown as Selection)
+    vi.spyOn(document, 'createRange').mockReturnValue({
+      selectNodeContents: vi.fn(),
+    } as unknown as Range)
 
     await expect(copyToClipboard('nope')).rejects.toThrow('Failed to copy text to clipboard')
   })
